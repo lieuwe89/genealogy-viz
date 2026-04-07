@@ -9,9 +9,9 @@ async function initViz() {
   surnamePalette = ColorModes.buildSurnamePalette(graphData.nodes);
 
   const years = graphData.nodes.map(n => n.birthYear).filter(Boolean);
-  const minYear = Math.min(...years);
-  const maxYear = Math.max(...years);
-  const medianYear = years.sort((a, b) => a - b)[Math.floor(years.length / 2)] || 1700;
+  const minYear = years.length ? Math.min(...years) : 1700;
+  const maxYear = years.length ? Math.max(...years) : 1700;
+  const medianYear = years.length ? years.sort((a, b) => a - b)[Math.floor(years.length / 2)] : 1700;
   const Z_RANGE = 600;
 
   function nodeZ(node) {

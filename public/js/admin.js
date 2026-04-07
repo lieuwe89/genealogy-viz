@@ -54,10 +54,10 @@ function renderPersonsTable(persons) {
   tbody.innerHTML = persons.map(p => `
     <tr>
       <td>${escHtml(p.name)}</td>
-      <td>${p.birthYear || ''}</td>
-      <td>${p.deathYear || ''}</td>
-      <td>${(p.roles || []).slice(0,2).join(', ')}</td>
-      <td><button class="btn btn-secondary" onclick="showPersonForm('${p.id}')">Edit</button></td>
+      <td>${escHtml(String(p.birthYear || ''))}</td>
+      <td>${escHtml(String(p.deathYear || ''))}</td>
+      <td>${escHtml((p.roles || []).slice(0,2).join(', '))}</td>
+      <td><button class="btn btn-secondary edit-person-btn" data-id="${escHtml(p.id)}">Edit</button></td>
     </tr>
   `).join('');
 }
@@ -133,8 +133,8 @@ async function loadRels() {
     <tr>
       <td>${escHtml(nameMap[r.person_a_id] || r.person_a_id)}</td>
       <td>${escHtml(nameMap[r.person_b_id] || r.person_b_id)}</td>
-      <td>${r.type}</td>
-      <td><button class="btn btn-danger" onclick="deleteRel(${r.id})">Delete</button></td>
+      <td>${escHtml(r.type)}</td>
+      <td><button class="btn btn-danger delete-rel-btn" data-id="${r.id}">Delete</button></td>
     </tr>
   `).join('');
 }
@@ -167,6 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('mapping-group').style.display = ext === 'xml' ? '' : 'none';
     });
   }
+
+  document.getElementById('persons-tbody')?.addEventListener('click', e => {
+    const btn = e.target.closest('.edit-person-btn');
+    if (btn) showPersonForm(btn.dataset.id);
+  });
+
+  document.getElementById('rels-tbody')?.addEventListener('click', e => {
+    const btn = e.target.closest('.delete-rel-btn');
+    if (btn) deleteRel(Number(btn.dataset.id));
+  });
 });
 
 async function doImport() {

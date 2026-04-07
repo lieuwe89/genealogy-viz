@@ -28,7 +28,7 @@ function renderPanel(data) {
 
   const roleHeader = document.getElementById('panel-role-header');
   roleHeader.innerHTML = data.roles.length
-    ? `<span class="role-badge">${data.roles[0].label}</span>`
+    ? `<span class="role-badge">${escHtml(data.roles[0].label)}</span>`
     : '';
 
   const body = document.getElementById('panel-body');
@@ -45,13 +45,13 @@ function renderPanel(data) {
   html += `<div class="panel-section">
     <div class="panel-label">Vitals</div>
     <div>${data.sex === 'M' ? 'Male' : data.sex === 'F' ? 'Female' : 'Unknown'}</div>`;
-  if (data.birth_date) html += `<div>b. ${data.birth_date}${data.birth_place ? ' · ' + data.birth_place : ''}</div>`;
-  if (data.death_date) html += `<div>d. ${data.death_date}${data.death_place ? ' · ' + data.death_place : ''}</div>`;
+  if (data.birth_date) html += `<div>b. ${escHtml(data.birth_date)}${data.birth_place ? ' · ' + escHtml(data.birth_place) : ''}</div>`;
+  if (data.death_date) html += `<div>d. ${escHtml(data.death_date)}${data.death_place ? ' · ' + escHtml(data.death_place) : ''}</div>`;
   html += `</div>`;
 
   if (data.roles.length) {
     html += `<div class="panel-section"><div class="panel-label">Roles</div>`;
-    html += data.roles.map(r => `<span class="role-badge">${r.label}</span>`).join('');
+    html += data.roles.map(r => `<span class="role-badge">${escHtml(r.label)}</span>`).join('');
     html += `</div>`;
   }
 
@@ -60,7 +60,7 @@ function renderPanel(data) {
     html += data.relationships.map(r => {
       const otherId = r.person_a_id === data.id ? r.person_b_id : r.person_a_id;
       const otherName = [r.name_prefix, r.given_name, r.surname].filter(Boolean).join(' ');
-      return `<a class="connection-link" onclick="flyToNode('${otherId}'); openPanel('${otherId}')">${otherName} <span style="color:#6e7681;font-size:11px">(${r.type})</span></a>`;
+      return `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)} <span style="color:#6e7681;font-size:11px">(${escHtml(r.type)})</span></a>`;
     }).join('');
     html += `</div>`;
   }
@@ -76,7 +76,7 @@ function renderPanel(data) {
     html += data.annotations.map(a => `
       <div class="annotation-item">
         ${a.content ? `<div>${escHtml(a.content)}</div>` : ''}
-        ${a.url ? `<a href="${escHtml(a.url)}" target="_blank" rel="noopener">${escHtml(a.url_label || a.url)}</a>` : ''}
+        ${a.url ? `<a href="${isSafeUrl(a.url) ? escHtml(a.url) : '#'}" target="_blank" rel="noopener">${escHtml(a.url_label || a.url)}</a>` : ''}
       </div>
     `).join('');
   }
@@ -176,6 +176,22 @@ function escHtml(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+function isSafeUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' || u.protocol === 'http:';
+  } catch { return false; }
+}
+
+document.getElementById('side-panel').addEventListener('click', e => {
+  const link = e.target.closest('.connection-link');
+  if (link) {
+    const id = link.dataset.id;
+    flyToNode(id);
+    openPanel(id);
+  }
+});
 
 window.openPanel = openPanel;
 window.closePanel = closePanel;
