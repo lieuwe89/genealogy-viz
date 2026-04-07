@@ -1,1 +1,114 @@
-<!DOCTYPE html><html><body><p>Admin loading...</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Genealogy Network</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="admin-body">
+  <!-- Login overlay -->
+  <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:999;display:flex;align-items:center;justify-content:center">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:32px;width:320px">
+      <h1 style="font-size:18px;margin-bottom:20px;color:#e6edf3">Admin login</h1>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" style="width:100%" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Log in</button>
+      <div id="login-error" style="color:#f85149;font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <nav class="admin-nav">
+    <span class="brand">Genealogy Admin</span>
+    <a href="#persons" class="active" onclick="showTab('persons')">Persons</a>
+    <a href="#relationships" onclick="showTab('relationships')">Relationships</a>
+    <a href="#import" onclick="showTab('import')">Import data</a>
+    <a href="/" style="margin-left:auto">← Visualisation</a>
+    <a href="#" onclick="doLogout()" style="color:#f85149">Log out</a>
+  </nav>
+
+  <div class="admin-content">
+    <!-- Persons tab -->
+    <div id="tab-persons">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h1 class="page-title" style="margin:0">Persons</h1>
+        <button class="btn btn-primary" onclick="showPersonForm(null)">+ Add person</button>
+      </div>
+      <input class="search-box" placeholder="Search by name…" oninput="filterPersons(this.value)">
+      <table class="admin-table">
+        <thead><tr><th>Name</th><th>Born</th><th>Died</th><th>Roles</th><th></th></tr></thead>
+        <tbody id="persons-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Relationships tab -->
+    <div id="tab-relationships" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h1 class="page-title" style="margin:0">Relationships</h1>
+        <button class="btn btn-primary" onclick="showRelForm()">+ Add relationship</button>
+      </div>
+      <table class="admin-table">
+        <thead><tr><th>Person A</th><th>Person B</th><th>Type</th><th></th></tr></thead>
+        <tbody id="rels-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Import tab -->
+    <div id="tab-import" style="display:none">
+      <h1 class="page-title">Import data</h1>
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:20px;margin-bottom:16px">
+        <p style="color:#8b949e;margin-bottom:16px">Upload a <strong>.ged</strong> (GEDCOM), <strong>.gramps</strong> (GRAMPS XML), or <strong>.xml</strong> (generic XML) file. <span style="color:#f85149">This replaces all current data.</span></p>
+        <div class="form-group">
+          <label>Data file</label>
+          <input type="file" id="import-file" accept=".ged,.gramps,.xml">
+        </div>
+        <div class="form-group" id="mapping-group" style="display:none">
+          <label>XML field mapping (JSON)</label>
+          <textarea id="import-mapping" rows="8" style="font-family:monospace;font-size:12px">{
+  "personElement": "person",
+  "id": "@id",
+  "givenName": "given",
+  "surname": "surname",
+  "sex": "@sex",
+  "birthYear": "birth/@year",
+  "deathYear": "death/@year"
+}</textarea>
+        </div>
+        <button class="btn btn-primary" onclick="doImport()">Import</button>
+        <div id="import-status" style="margin-top:12px;font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Person form modal -->
+  <div id="person-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:500;align-items:center;justify-content:center">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;width:480px;max-height:80vh;overflow-y:auto">
+      <h2 id="person-modal-title" style="font-size:16px;margin-bottom:16px;color:#e6edf3">Edit person</h2>
+      <input type="hidden" id="pm-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Given name</label><input id="pm-given_name"></div>
+        <div class="form-group"><label>Surname</label><input id="pm-surname"></div>
+        <div class="form-group"><label>Prefix</label><input id="pm-name_prefix"></div>
+        <div class="form-group"><label>Suffix</label><input id="pm-name_suffix"></div>
+        <div class="form-group"><label>Sex</label>
+          <select id="pm-sex"><option value="M">Male</option><option value="F">Female</option><option value="U">Unknown</option></select>
+        </div>
+        <div class="form-group"><label>Birth date</label><input id="pm-birth_date"></div>
+        <div class="form-group"><label>Birth place</label><input id="pm-birth_place"></div>
+        <div class="form-group"><label>Death date</label><input id="pm-death_date"></div>
+        <div class="form-group"><label>Death place</label><input id="pm-death_place"></div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="pm-notes" rows="3"></textarea></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary" onclick="savePersonForm()">Save</button>
+        <button class="btn btn-secondary" onclick="closePersonModal()">Cancel</button>
+        <button class="btn btn-danger" id="pm-delete" onclick="deletePerson()" style="margin-left:auto">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>
