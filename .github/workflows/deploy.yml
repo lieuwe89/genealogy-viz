@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy to fly.io
 
 on:
   push:
@@ -13,36 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+      - name: Deploy
+        uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy files
-        run: |
-          tar czf - \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='node_modules' \
-            --exclude='tests' \
-            --exclude='data' \
-            --exclude='.env' \
-            --exclude='*.log' \
-            --exclude='.DS_Store' \
-            --exclude='scripts' \
-            --exclude='Dockerfile' \
-            --exclude='fly.toml' \
-            --exclude='.planning' \
-            . | ssh -i ~/.ssh/deploy_key \
-                -o StrictHostKeyChecking=no \
-                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "tar xzf - -C ${{ secrets.DEPLOY_PATH_PLAYGROUND }} && \
-                 mkdir -p ${{ secrets.DEPLOY_PATH_PLAYGROUND }}/tmp && \
-                 touch ${{ secrets.DEPLOY_PATH_PLAYGROUND }}/tmp/restart.txt"
-
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f ~/.ssh/deploy_key
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
