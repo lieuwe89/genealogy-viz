@@ -3,12 +3,14 @@
 
 let graph, graphData, colorMode = 'role', surnamePalette = {};
 let overlapFocusId = null; // null = no overlap mode active
+let currentClusterLevel = 'persons';
 
 async function initViz() {
   const res = await fetch('api/graph');
   graphData = await res.json();
   window.graphData = graphData;
   surnamePalette = ColorModes.buildSurnamePalette(graphData.nodes);
+  if (window.Clustering) Clustering.init(graphData);
 
   const years = graphData.nodes.map(n => n.birthYear).filter(Boolean);
   const minYear = years.length ? Math.min(...years) : 1700;
@@ -30,7 +32,24 @@ async function initViz() {
     .linkColor(l => l.type === 'spouse' ? '#6e7681' : '#374151')
     .linkWidth(l => l.type === 'spouse' ? 1.5 : 0.8)
     .linkOpacity(0.4)
-    .onNodeClick(node => openPanel(node.id))
+    .onNodeClick(function(node) {
+      if (node._isCluster) {
+        var finer = Clustering.finerLevel(currentClusterLevel);
+        var dist = 80;
+        graph.cameraPosition(
+          { x: (node.x || 0) + dist, y: (node.y || 0) + dist, z: (node.z || 0) + dist },
+          node,
+          600
+        );
+        if (Clustering.isLocked()) {
+          Clustering.setLocked(false);
+          updateLockButton();
+        }
+        applyClusterLevel(finer);
+        return;
+      }
+      openPanel(node.id);
+    })
     .d3Force('z', () => {
       graphData.nodes.forEach(n => {
         n.vz = (n.vz || 0) + (nodeZ(n) - (n.z || 0)) * 0.05;
@@ -74,6 +93,29 @@ async function initViz() {
     scene.add(sprite);
   });
 
+  // Auto-clustering based on camera distance
+  let clusterDebounceTimer = null;
+  function onCameraChange() {
+    if (clusterDebounceTimer) clearTimeout(clusterDebounceTimer);
+    clusterDebounceTimer = setTimeout(function() {
+      if (!window.Clustering || Clustering.isLocked()) return;
+      var dist = graph.camera().position.length();
+      var newLevel = Clustering.getAutoLevel(dist);
+      if (newLevel !== currentClusterLevel) {
+        applyClusterLevel(newLevel);
+      }
+    }, 200);
+  }
+  try {
+    var controls = graph.controls();
+    controls.addEventListener('change', onCameraChange);
+  } catch (e) {
+    (function pollCamera() {
+      onCameraChange();
+      requestAnimationFrame(pollCamera);
+    })();
+  }
+
   const session = await fetch('admin/session').then(r => r.json());
   if (session.isAdmin) {
     document.getElementById('admin-badge').style.display = 'block';
@@ -81,7 +123,54 @@ async function initViz() {
   }
 }
 
+function applyClusterLevel(level) {
+  if (!window.Clustering) return;
+  currentClusterLevel = level;
+  Clustering.setLevel(level);
+  var sel = document.getElementById('cluster-level');
+  if (sel) sel.value = level;
+  var clustered = Clustering.buildClusteredData(level, window.graphData, surnamePalette);
+  graph.graphData(clustered);
+  graph.nodeThreeObject(buildNodeObject);
+}
+
+function updateLockButton() {
+  var btn = document.getElementById('btn-cluster-lock');
+  if (!btn || !window.i18n) return;
+  var locked = Clustering.isLocked();
+  btn.textContent = i18n.t(locked ? 'cluster_locked' : 'cluster_auto');
+  btn.classList.toggle('active', locked);
+}
+
 function buildNodeObject(node) {
+  if (node._isCluster) {
+    var geo = new THREE.SphereGeometry(node._radius, 16, 12);
+    var opacity = node._level === 'century' ? 0.12 : 0.20;
+    var mat = new THREE.MeshBasicMaterial({
+      color: node._color,
+      transparent: true,
+      opacity: opacity,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    var canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 64;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = node._labelColor;
+    ctx.font = '28px monospace';
+    var labelText = node.name;
+    if (node._members) labelText += ' (' + node._members.length + ')';
+    ctx.fillText(labelText, 8, 44);
+    var tex = new THREE.CanvasTexture(canvas);
+    var spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.7 });
+    var sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(120, 30, 1);
+    sprite.position.set(0, node._radius + 10, 0);
+    mesh.add(sprite);
+    return mesh;
+  }
+
   let color;
   let opacity = 1.0;
 
@@ -143,3 +232,24 @@ window.setColorMode = setColorMode;
 window.flyToNode = flyToNode;
 window.applyOverlapColors = applyOverlapColors;
 window.clearOverlapColors = clearOverlapColors;
+
+window.setClusterLevel = function(level) {
+  applyClusterLevel(level);
+};
+
+window.toggleClusterLock = function() {
+  if (!window.Clustering) return;
+  var locked = !Clustering.isLocked();
+  Clustering.setLocked(locked);
+  updateLockButton();
+};
+
+window.addEventListener('langchange', function() {
+  updateLockButton();
+  var sel = document.getElementById('cluster-level');
+  if (sel && window.i18n) {
+    sel.querySelectorAll('option[data-i18n]').forEach(function(opt) {
+      opt.textContent = i18n.t(opt.dataset.i18n);
+    });
+  }
+});
