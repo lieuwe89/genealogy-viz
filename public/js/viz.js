@@ -3,6 +3,19 @@
 
 let graph, graphData, colorMode = 'role', surnamePalette = {};
 let overlapFocusId = null; // null = no overlap mode active
+let selectedNodeId = null; // tracks which node is selected for link highlighting
+
+function getLinkColor(link) {
+  if (selectedNodeId) {
+    const src = typeof link.source === 'object' ? link.source.id : link.source;
+    const tgt = typeof link.target === 'object' ? link.target.id : link.target;
+    if (src === selectedNodeId || tgt === selectedNodeId) {
+      return link.type === 'spouse' ? '#f59e0b' : '#facc15'; // bright yellow — connected
+    }
+    return link.type === 'spouse' ? '#252d3a' : '#1a2233'; // very dim — not connected
+  }
+  return link.type === 'spouse' ? '#6e7681' : '#374151'; // default
+}
 
 async function initViz() {
   const res = await fetch('api/graph');
@@ -27,7 +40,7 @@ async function initViz() {
     .nodeLabel(n => n.name)
     .nodeThreeObject(buildNodeObject)
     .nodeThreeObjectExtend(false)
-    .linkColor(l => l.type === 'spouse' ? '#6e7681' : '#374151')
+    .linkColor(getLinkColor)
     .linkWidth(l => l.type === 'spouse' ? 1.5 : 0.8)
     .linkOpacity(0.4)
     .onNodeClick(function(node) {
@@ -214,12 +227,20 @@ function buildNodeObject(node) {
 
 function applyOverlapColors(focusId) {
   overlapFocusId = focusId;
-  if (graph) graph.nodeThreeObject(buildNodeObject);
+  selectedNodeId = focusId;
+  if (graph) {
+    graph.nodeThreeObject(buildNodeObject);
+    graph.linkColor(getLinkColor);
+  }
 }
 
 function clearOverlapColors() {
   overlapFocusId = null;
-  if (graph) graph.nodeThreeObject(buildNodeObject);
+  selectedNodeId = null;
+  if (graph) {
+    graph.nodeThreeObject(buildNodeObject);
+    graph.linkColor(getLinkColor);
+  }
 }
 
 function setColorMode(mode) {
