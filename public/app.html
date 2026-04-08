@@ -24,6 +24,56 @@
 
   <button id="theme-toggle" onclick="Theme.toggle()" title="Toggle light/dark mode">🌙</button>
 
+  <button id="info-help-btn" onclick="InfoModal.open()" data-i18n-title="info_reopen_title" title="Info &amp; uitleg">?</button>
+
+  <div id="info-modal-overlay" class="hidden">
+    <div id="info-modal" role="dialog" aria-modal="true">
+      <div class="info-modal-header">
+        <h2 data-i18n="info_modal_title">Welkom bij de historische netwerkvisualisatie</h2>
+        <p data-i18n="info_modal_subtitle">Een interactief 3D-netwerk van personen en relaties</p>
+      </div>
+      <div class="info-modal-body">
+        <div class="info-section">
+          <h3 data-i18n="info_nav_heading">Navigeren</h3>
+          <ul>
+            <li data-i18n="info_nav_rotate">Klik + slepen om te draaien</li>
+            <li data-i18n="info_nav_zoom">Scroll om in/uit te zoomen</li>
+            <li data-i18n="info_nav_pan">Rechtermuisknop of twee vingers om te verschuiven</li>
+          </ul>
+        </div>
+        <div class="info-section">
+          <h3 data-i18n="info_explore_heading">Personen verkennen</h3>
+          <p data-i18n="info_explore_click">Klik op een knoop om het detailpaneel te openen.</p>
+          <p style="margin-top:6px" data-i18n="info_explore_compare">Klik een tweede persoon om te vergelijken.</p>
+        </div>
+        <div class="info-section">
+          <h3 data-i18n="info_colors_heading">Kleurmodi (toolbar boven links)</h3>
+          <ul>
+            <li data-i18n="info_colors_role">Op rol</li>
+            <li data-i18n="info_colors_surname">Op achternaam</li>
+            <li data-i18n="info_colors_sex">Op geslacht</li>
+            <li data-i18n="info_colors_overlap">Overlap</li>
+          </ul>
+        </div>
+        <div class="info-section">
+          <h3 data-i18n="info_timearrow_heading">Tijdpijl</h3>
+          <p data-i18n="info_timearrow_desc">De stippelknop 'Tijdpijl' toont de tijdrichting in de 3D-ruimte.</p>
+        </div>
+        <div class="info-section">
+          <h3 data-i18n="info_lang_heading">Taal</h3>
+          <p data-i18n="info_lang_desc">Gebruik de EN/NL-knop in de toolbar om te wisselen.</p>
+        </div>
+      </div>
+      <div class="info-modal-footer">
+        <label class="info-dont-show">
+          <input type="checkbox" id="info-dont-show-cb">
+          <span data-i18n="info_dont_show">Niet meer tonen</span>
+        </label>
+        <button class="btn btn-primary" onclick="InfoModal.close()" data-i18n="info_close">Aan de slag</button>
+      </div>
+    </div>
+  </div>
+
   <div id="side-panel">
     <div class="panel-header">
       <div>
@@ -49,9 +99,43 @@
   <script src="js/side-panel.js"></script>
   <script src="js/viz.js"></script>
   <script>
+    const InfoModal = (function () {
+      const STORAGE_KEY = 'info_modal_dismissed';
+
+      function open() {
+        document.getElementById('info-modal-overlay').classList.remove('hidden');
+        document.getElementById('info-dont-show-cb').checked = false;
+      }
+
+      function close() {
+        if (document.getElementById('info-dont-show-cb').checked) {
+          localStorage.setItem(STORAGE_KEY, '1');
+        }
+        document.getElementById('info-modal-overlay').classList.add('hidden');
+      }
+
+      function maybeShow() {
+        if (!localStorage.getItem(STORAGE_KEY)) open();
+      }
+
+      return { open: open, close: close, maybeShow: maybeShow };
+    })();
+
     document.addEventListener('DOMContentLoaded', async function() {
       await i18n.init();
+      InfoModal.maybeShow();
       await initViz();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const overlay = document.getElementById('info-modal-overlay');
+        if (!overlay.classList.contains('hidden')) InfoModal.close();
+      }
+    });
+
+    document.getElementById('info-modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) InfoModal.close();
     });
   </script>
 </body>
