@@ -1,6 +1,6 @@
 {
   "name": "genealogy-viz",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "3D genealogical network visualiser",
   "main": "server/index.js",
   "scripts": {

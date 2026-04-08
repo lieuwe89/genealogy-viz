@@ -34,8 +34,9 @@ async function initViz() {
     return ((y - minYear) / (maxYear - minYear || 1)) * Z_RANGE - Z_RANGE / 2;
   }
 
+  const initBg = Theme.isLight() ? '#f6f8fa' : '#0d1117';
   graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('graph-container'))
-    .backgroundColor('#0d1117')
+    .backgroundColor(initBg)
     .graphData(graphData)
     .nodeLabel(n => n.name)
     .nodeThreeObject(buildNodeObject)
@@ -56,6 +57,8 @@ async function initViz() {
         n.vz = (n.vz || 0) + (nodeZ(n) - (n.z || 0)) * 0.05;
       });
     });
+
+  window.graph = graph; // expose for theme switcher
 
   // ─── Time-direction background elements ──────────────────────────────────
   const scene = graph.scene();
