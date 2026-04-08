@@ -3,8 +3,13 @@
 let currentPersonId = null;
 let currentData = null;
 let editMode = false;
+let secondPersonId = null;
+let secondPersonData = null;
 
 async function openPanel(personId) {
+  // Reset two-person mode on direct graph click
+  secondPersonId = null;
+  secondPersonData = null;
   currentPersonId = personId;
   editMode = false;
   const res = await fetch(`api/persons/${encodeURIComponent(personId)}`);
@@ -12,13 +17,33 @@ async function openPanel(personId) {
   currentData = await res.json();
   renderPanel(currentData);
   document.getElementById('side-panel').classList.add('open');
+  // Trigger overlap colours in 3D graph
+  if (window.applyOverlapColors) window.applyOverlapColors(personId);
 }
 
 function closePanel() {
   document.getElementById('side-panel').classList.remove('open');
   currentPersonId = null;
   currentData = null;
+  secondPersonId = null;
+  secondPersonData = null;
   editMode = false;
+  if (window.clearOverlapColors) window.clearOverlapColors();
+}
+
+async function openCompare(personId) {
+  if (!currentPersonId || personId === currentPersonId) return;
+  secondPersonId = personId;
+  const res = await fetch(`api/persons/${encodeURIComponent(personId)}`);
+  if (!res.ok) return;
+  secondPersonData = await res.json();
+  renderTwoPersonMode();
+}
+
+function backToSingle() {
+  secondPersonId = null;
+  secondPersonData = null;
+  renderPanel(currentData);
 }
 
 function renderPanel(data) {
@@ -60,7 +85,8 @@ function renderPanel(data) {
     html += data.relationships.map(r => {
       const otherId = r.person_a_id === data.id ? r.person_b_id : r.person_a_id;
       const otherName = [r.name_prefix, r.given_name, r.surname].filter(Boolean).join(' ');
-      return `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)} <span style="color:#6e7681;font-size:11px">(${escHtml(r.type)})</span></a>`;
+      return `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)} <span style="color:#6e7681;font-size:11px">(${escHtml(r.type)})</span></a>` +
+        `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-bottom:4px" onclick="openCompare('${escHtml(otherId)}')">Tijdlijn</button>`;
     }).join('');
     html += `</div>`;
   }
@@ -87,6 +113,87 @@ function renderPanel(data) {
       <button class="btn btn-secondary" onclick="enterEditMode()" style="width:100%">Edit this person</button>
     </div>`;
   }
+
+  body.innerHTML = html;
+}
+
+function renderTwoPersonMode() {
+  const panel = document.getElementById('side-panel');
+  panel.classList.add('open');
+
+  // Header shows both names
+  const nameA = [currentData.name_prefix, currentData.given_name, currentData.surname].filter(Boolean).join(' ');
+  const nameB = [secondPersonData.name_prefix, secondPersonData.given_name, secondPersonData.surname].filter(Boolean).join(' ');
+  document.getElementById('panel-name').textContent = `${nameA} & ${nameB}`;
+  document.getElementById('panel-role-header').innerHTML = '';
+
+  const body = document.getElementById('panel-body');
+  document.getElementById('panel-edit-actions').style.display = 'none';
+
+  // Find shortest path
+  if (!window.graphData || !window.OverlapLogic) {
+    body.innerHTML = '<div class="panel-section" style="color:#6e7681">Graph data niet beschikbaar.</div>';
+    return;
+  }
+  const path = OverlapLogic.shortestPath(window.graphData, currentPersonId, secondPersonId);
+  if (path.length === 0) {
+    body.innerHTML = '<div class="panel-section" style="color:#6e7681">Geen verbinding gevonden tussen deze twee personen.</div>';
+    return;
+  }
+
+  // Collect path nodes with lifespans
+  const pathNodes = path.map(id => window.graphData.nodes.find(n => String(n.id) === String(id))).filter(Boolean);
+  const lifespans = pathNodes.map(n => OverlapLogic.estimateLifespan(n, window.graphData));
+
+  // Determine axis range
+  const allYears = lifespans.flatMap(l => [l.birthYear, l.deathYear]).filter(Boolean);
+  if (allYears.length === 0) {
+    body.innerHTML = '<div class="panel-section" style="color:#6e7681">Geen jaartallen beschikbaar voor tijdlijn.</div>';
+    return;
+  }
+  const axisMin = Math.min(...allYears) - 5;
+  const axisMax = Math.max(...allYears) + 5;
+  const axisSpan = axisMax - axisMin || 1;
+
+  // Build HTML
+  let html = `<div class="panel-section"><div class="panel-label">Tijdlijn — kortste route (${path.length} personen)</div>`;
+
+  // Axis labels: show ~4 ticks
+  const tickStep = Math.ceil(axisSpan / 4 / 50) * 50 || 50;
+  html += `<div class="timeline-axis">`;
+  for (let y = Math.ceil(axisMin / tickStep) * tickStep; y <= axisMax; y += tickStep) {
+    const pct = ((y - axisMin) / axisSpan * 100).toFixed(1);
+    html += `<span class="timeline-axis-label" style="left:${pct}%">${y}</span>`;
+  }
+  html += `</div>`;
+
+  // One bar per path node
+  pathNodes.forEach((node, i) => {
+    const ls = lifespans[i];
+    const isFocal = String(node.id) === String(currentPersonId) || String(node.id) === String(secondPersonId);
+    const shortName = [node.givenName, node.surname].filter(Boolean).join(' ') || node.name || '?';
+
+    html += `<div class="timeline-bar-row">`;
+    html += `<div class="timeline-bar-name" title="${escHtml(node.name || '')}">${escHtml(shortName)}</div>`;
+    html += `<div class="timeline-bar-track">`;
+
+    if (ls.birthYear) {
+      const left = ((ls.birthYear - axisMin) / axisSpan * 100).toFixed(1);
+      const width = (((ls.deathYear || ls.birthYear + 70) - ls.birthYear) / axisSpan * 100).toFixed(1);
+      const cls = ['timeline-bar-fill', ls.estimated ? 'estimated' : '', isFocal ? 'focal' : ''].filter(Boolean).join(' ');
+      html += `<div class="${cls}" style="left:${left}%;width:${width}%"></div>`;
+    }
+    html += `</div>`;
+    if (ls.estimated) html += `<span class="timeline-estimated-label">geschat</span>`;
+    html += `</div>`;
+  });
+
+  html += `</div>`; // panel-section
+
+  // Back button
+  html += `<div style="padding:12px 16px">
+    <button class="btn btn-secondary" onclick="backToSingle()" style="width:100%">Terug naar ${escHtml([currentData.given_name, currentData.surname].filter(Boolean).join(' '))}</button>
+  </div>`;
 
   body.innerHTML = html;
 }
@@ -195,6 +302,8 @@ document.getElementById('side-panel').addEventListener('click', e => {
 
 window.openPanel = openPanel;
 window.closePanel = closePanel;
+window.openCompare = openCompare;
+window.backToSingle = backToSingle;
 window.enterEditMode = enterEditMode;
 window.saveEdit = saveEdit;
 window.cancelEdit = cancelEdit;
