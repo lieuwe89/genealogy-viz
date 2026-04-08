@@ -18,7 +18,6 @@ const db = initDb(process.env.DB_PATH || './data/genealogy.db');
 app.locals.db = db;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
@@ -27,14 +26,18 @@ app.use(session({
 }));
 
 ensureAdminExists(db).catch(console.error);
-mountAuth(app);
 
-app.use('/api/graph', graphRouter);
-app.use('/api/persons', personsRouter);
-app.use('/api/relationships', relsRouter);
-app.use('/api/annotations', annotationsRouter);
+// ── /genealogy-viz subrouter ──────────────────────────────────────────────────
+const vizRouter = express.Router();
 
-app.post('/admin/import', requireAdmin, upload.single('file'), async (req, res) => {
+mountAuth(vizRouter);
+
+vizRouter.use('/api/graph', graphRouter);
+vizRouter.use('/api/persons', personsRouter);
+vizRouter.use('/api/relationships', relsRouter);
+vizRouter.use('/api/annotations', annotationsRouter);
+
+vizRouter.post('/admin/import', requireAdmin, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const format = detectFormat(req.file.originalname);
   let mapping = null;
@@ -52,11 +55,31 @@ app.post('/admin/import', requireAdmin, upload.single('file'), async (req, res) 
   }
 });
 
-app.get('/admin*', (req, res) => {
+// Serve admin SPA under /genealogy-viz/admin (requires auth)
+vizRouter.get('/admin*', requireAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Genealogy viz running on http://localhost:${PORT}`));
+// Serve visualiser HTML at /genealogy-viz
+vizRouter.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/app.html'));
+});
 
+// Static assets (JS/CSS) reachable under /genealogy-viz prefix
+vizRouter.use(express.static(path.join(__dirname, '../public')));
+
+app.use('/genealogy-viz', vizRouter);
+
+// ── Root: gallery landing page ────────────────────────────────────────────────
+// Explicit route only — no root-level static() to prevent bypassing auth on /admin
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Export for testing; caller does app.listen()
 module.exports = app;
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Genealogy viz running on http://localhost:${PORT}`));
+}
