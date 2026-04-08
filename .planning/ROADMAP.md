@@ -23,8 +23,8 @@
 **Plans:** 5 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — i18n framework module, translation JSON files, and language toggle
-- [ ] 03-02-PLAN.md — Relationship path classification algorithm (pure logic + tests)
-- [ ] 03-03-PLAN.md — i18n integration across all UI + relationship label in side panel
-- [ ] 03-04-PLAN.md — Hierarchical node clustering with zoom-based auto-switching and toolbar controls
-- [ ] 03-05-PLAN.md — Visual and functional verification of all Phase 3 features
+- [x] 03-01-PLAN.md — i18n framework module, translation JSON files, and language toggle
+- [x] 03-02-PLAN.md — Relationship path classification algorithm (pure logic + tests)
+- [x] 03-03-PLAN.md — i18n integration across all UI + relationship label in side panel
+- [x] 03-04-PLAN.md — Hierarchical node clustering with zoom-based auto-switching and toolbar controls
+- [x] 03-05-PLAN.md — Visual and functional verification of all Phase 3 features

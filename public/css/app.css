@@ -32,6 +32,24 @@ body {
 .toolbar-btn:hover { background: #21262d; }
 .toolbar-btn.active { background: #1f6feb; border-color: #388bfd; color: #fff; }
 
+.toolbar-divider {
+  width: 1px;
+  background: #30363d;
+  align-self: stretch;
+  margin: 2px 4px;
+}
+
+/* Time-arrow toggle — distinct from color-mode buttons */
+.toolbar-toggle {
+  border-style: dashed;
+}
+.toolbar-toggle.active {
+  background: #0d3360;
+  border-color: #3b82f6;
+  border-style: solid;
+  color: #93c5fd;
+}
+
 /* Admin badge */
 #admin-badge {
   position: fixed;
