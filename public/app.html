@@ -22,6 +22,13 @@
 
   <div id="admin-badge">● Admin mode — <a href="admin" style="color:inherit">Open CRM</a></div>
 
+  <div id="search-bar">
+    <div id="search-wrapper">
+      <input id="search-input" type="text" placeholder="Zoek persoon…" autocomplete="off" />
+      <ul id="search-results" class="hidden"></ul>
+    </div>
+  </div>
+
   <button id="theme-toggle" onclick="Theme.toggle()" title="Toggle light/dark mode">🌙</button>
 
   <button id="info-help-btn" onclick="InfoModal.open()" data-i18n-title="info_reopen_title" title="Info &amp; uitleg">?</button>
@@ -137,6 +144,58 @@
     document.getElementById('info-modal-overlay').addEventListener('click', function(e) {
       if (e.target === this) InfoModal.close();
     });
+
+    (function () {
+      const input = document.getElementById('search-input');
+      const list  = document.getElementById('search-results');
+
+      function getNodes() {
+        return (window.graphData && window.graphData.nodes) ? window.graphData.nodes : [];
+      }
+
+      function nodeName(n) {
+        return [n.givenName, n.surname].filter(Boolean).join(' ') || n.name || '';
+      }
+
+      function showResults(matches) {
+        list.innerHTML = '';
+        if (!matches.length) { list.classList.add('hidden'); return; }
+        matches.slice(0, 8).forEach(function(n) {
+          const li = document.createElement('li');
+          li.textContent = nodeName(n);
+          li.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            input.value = nodeName(n);
+            list.classList.add('hidden');
+            openPanel(n.id);
+            if (window.flyToNode) window.flyToNode(n.id);
+          });
+          list.appendChild(li);
+        });
+        list.classList.remove('hidden');
+      }
+
+      input.addEventListener('input', function() {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { list.classList.add('hidden'); return; }
+        const matches = getNodes().filter(function(n) {
+          return nodeName(n).toLowerCase().includes(q);
+        });
+        showResults(matches);
+      });
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { list.classList.add('hidden'); input.blur(); }
+        if (e.key === 'Enter') {
+          const first = list.querySelector('li');
+          if (first) first.dispatchEvent(new MouseEvent('mousedown'));
+        }
+      });
+
+      input.addEventListener('blur', function() {
+        setTimeout(function() { list.classList.add('hidden'); }, 150);
+      });
+    })();
   </script>
 </body>
 </html>
