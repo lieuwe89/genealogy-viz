@@ -143,5 +143,3 @@ window.setColorMode = setColorMode;
 window.flyToNode = flyToNode;
 window.applyOverlapColors = applyOverlapColors;
 window.clearOverlapColors = clearOverlapColors;
-
-document.addEventListener('DOMContentLoaded', initViz);
