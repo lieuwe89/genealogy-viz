@@ -11,35 +11,36 @@
   <!-- Login overlay -->
   <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:999;display:flex;align-items:center;justify-content:center">
     <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:32px;width:320px">
-      <h1 style="font-size:18px;margin-bottom:20px;color:#e6edf3">Admin login</h1>
+      <h1 style="font-size:18px;margin-bottom:20px;color:#e6edf3" data-i18n="admin_login_title">Admin login</h1>
       <div class="form-group">
-        <label>Password</label>
+        <label data-i18n="admin_login_password">Password</label>
         <input type="password" id="login-password" style="width:100%" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Log in</button>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()" data-i18n="admin_login_button">Log in</button>
       <div id="login-error" style="color:#f85149;font-size:12px;margin-top:8px"></div>
     </div>
   </div>
 
   <nav class="admin-nav">
-    <span class="brand">Genealogy Admin</span>
-    <a href="#persons" class="active" onclick="showTab(event,'persons',this)">Persons</a>
-    <a href="#relationships" onclick="showTab(event,'relationships',this)">Relationships</a>
-    <a href="#import" onclick="showTab(event,'import',this)">Import data</a>
-    <a href="#" onclick="event.preventDefault();doExport()">Export data</a>
-    <a href="/genealogy-viz/" style="margin-left:auto">← Visualisation</a>
-    <a href="#" onclick="event.preventDefault();showChangePasswordModal()">Change password</a>
-    <a href="#" onclick="event.preventDefault();doLogout()" style="color:#f85149">Log out</a>
+    <span class="brand" data-i18n="admin_brand">Genealogy Admin</span>
+    <button class="toolbar-btn" id="admin-btn-lang" data-i18n="lang_toggle_label" onclick="i18n.toggleLang()" style="padding:4px 8px;font-size:11px;margin-right:8px">EN</button>
+    <a href="#persons" class="active" data-i18n="admin_persons" onclick="showTab(event,'persons',this)">Persons</a>
+    <a href="#relationships" data-i18n="admin_relationships" onclick="showTab(event,'relationships',this)">Relationships</a>
+    <a href="#import" data-i18n="admin_import" onclick="showTab(event,'import',this)">Import data</a>
+    <a href="#" data-i18n="admin_export" onclick="event.preventDefault();doExport()">Export data</a>
+    <a href="/genealogy-viz/" data-i18n="admin_viz_link" style="margin-left:auto">← Visualisation</a>
+    <a href="#" data-i18n="admin_change_password" onclick="event.preventDefault();showChangePasswordModal()">Change password</a>
+    <a href="#" data-i18n="admin_logout" onclick="event.preventDefault();doLogout()" style="color:#f85149">Log out</a>
   </nav>
 
   <div class="admin-content">
     <!-- Persons tab -->
     <div id="tab-persons">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h1 class="page-title" style="margin:0">Persons</h1>
-        <button class="btn btn-primary" onclick="showPersonForm(null)">+ Add person</button>
+        <h1 class="page-title" style="margin:0" data-i18n="admin_persons">Persons</h1>
+        <button class="btn btn-primary" data-i18n="admin_add_person" onclick="showPersonForm(null)">+ Add person</button>
       </div>
-      <input class="search-box" placeholder="Search by name…" oninput="filterPersons(this.value)">
+      <input class="search-box" data-i18n-placeholder="admin_search_placeholder" placeholder="Search by name…" oninput="filterPersons(this.value)">
       <table class="admin-table">
         <thead><tr><th>Name</th><th>Born</th><th>Died</th><th>Roles</th><th></th></tr></thead>
         <tbody id="persons-tbody"></tbody>
@@ -60,7 +61,7 @@
 
     <!-- Import tab -->
     <div id="tab-import" style="display:none">
-      <h1 class="page-title">Import data</h1>
+      <h1 class="page-title" data-i18n="admin_import_title">Import data</h1>
       <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:20px;margin-bottom:16px">
         <p style="color:#8b949e;margin-bottom:16px">Upload a <strong>.ged</strong> (GEDCOM), <strong>.gramps</strong> (GRAMPS XML), or <strong>.xml</strong> (generic XML) file. <span style="color:#f85149">This replaces all current data.</span></p>
         <div class="form-group">
@@ -127,6 +128,12 @@
     </div>
   </div>
 
+  <script src="js/i18n.js"></script>
   <script src="js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.i18n) i18n.init();
+    });
+  </script>
 </body>
 </html>
