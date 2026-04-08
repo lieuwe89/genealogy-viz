@@ -14,6 +14,7 @@
     <button class="toolbar-btn active" id="btn-role" onclick="setColorMode('role')">By Role</button>
     <button class="toolbar-btn" id="btn-surname" onclick="setColorMode('surname')">By Surname</button>
     <button class="toolbar-btn" id="btn-sex" onclick="setColorMode('sex')">By Sex</button>
+    <button class="toolbar-btn" id="btn-overlap" onclick="setColorMode('overlap')" title="Klik een persoon om overlappende tijdgenoten te zien">Overlap</button>
   </div>
 
   <div id="admin-badge">● Admin mode — <a href="admin" style="color:inherit">Open CRM</a></div>
@@ -36,6 +37,7 @@
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script src="https://unpkg.com/3d-force-graph@1.73.0/dist/3d-force-graph.min.js"></script>
   <script src="js/colour-modes.js"></script>
+  <script src="js/overlap-logic.js"></script>
   <script src="js/side-panel.js"></script>
   <script src="js/viz.js"></script>
 </body>

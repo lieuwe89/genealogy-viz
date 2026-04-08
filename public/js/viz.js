@@ -1,11 +1,13 @@
 'use strict';
-/* global ForceGraph3D, ColorModes */
+/* global ForceGraph3D, ColorModes, OverlapLogic */
 
 let graph, graphData, colorMode = 'role', surnamePalette = {};
+let overlapFocusId = null; // null = no overlap mode active
 
 async function initViz() {
   const res = await fetch('api/graph');
   graphData = await res.json();
+  window.graphData = graphData;
   surnamePalette = ColorModes.buildSurnamePalette(graphData.nodes);
 
   const years = graphData.nodes.map(n => n.birthYear).filter(Boolean);
@@ -23,9 +25,8 @@ async function initViz() {
     .backgroundColor('#0d1117')
     .graphData(graphData)
     .nodeLabel(n => n.name)
-    .nodeColor(n => ColorModes.getNodeColor(n, colorMode, surnamePalette))
-    .nodeVal(3)
-    .nodeOpacity(0.95)
+    .nodeThreeObject(buildNodeObject)
+    .nodeThreeObjectExtend(false)
     .linkColor(l => l.type === 'spouse' ? '#6e7681' : '#374151')
     .linkWidth(l => l.type === 'spouse' ? 1.5 : 0.8)
     .linkOpacity(0.4)
@@ -36,6 +37,43 @@ async function initViz() {
       });
     });
 
+  // Time-direction century marker planes
+  const scene = graph.scene();
+  const centuries = [];
+  for (let y = Math.ceil(minYear / 100) * 100; y <= maxYear; y += 100) {
+    centuries.push(y);
+  }
+  centuries.forEach(year => {
+    const t = (year - minYear) / (maxYear - minYear || 1);
+    const z = t * Z_RANGE - Z_RANGE / 2;
+    const planeGeo = new THREE.PlaneGeometry(800, 800);
+    const planeMat = new THREE.MeshBasicMaterial({
+      color: 0x1e3a5f,
+      transparent: true,
+      opacity: 0.08,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const plane = new THREE.Mesh(planeGeo, planeMat);
+    plane.rotation.x = Math.PI / 2; // horizontal plane
+    plane.position.z = z;
+    scene.add(plane);
+
+    // Year label using THREE sprite
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(100,160,255,0.5)';
+    ctx.font = '28px monospace';
+    ctx.fillText(String(year), 8, 44);
+    const tex = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.5 });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(120, 30, 1);
+    sprite.position.set(-380, 5, z);
+    scene.add(sprite);
+  });
+
   const session = await fetch('admin/session').then(r => r.json());
   if (session.isAdmin) {
     document.getElementById('admin-badge').style.display = 'block';
@@ -43,11 +81,57 @@ async function initViz() {
   }
 }
 
+function buildNodeObject(node) {
+  let color;
+  let opacity = 1.0;
+
+  if (overlapFocusId) {
+    if (node.id === overlapFocusId) {
+      color = '#facc15'; // yellow — the selected focal node
+    } else {
+      const focusNode = graphData.nodes.find(n => n.id === overlapFocusId);
+      const level = OverlapLogic.overlapLevel(focusNode, node, graphData);
+      if (level === 'overlap')    { color = '#f97316'; }  // vivid orange
+      if (level === 'no-overlap') { color = '#374151'; opacity = 0.25; } // dark grey, semi-transparent
+      if (level === 'uncertain')  { color = '#6366f1'; }  // indigo tint for estimated
+      if (!color) color = '#6366f1'; // fallback
+    }
+  } else {
+    color = ColorModes.getNodeColor(node, colorMode, surnamePalette);
+  }
+
+  const hasLifespan = node.birthYear && node.deathYear && node.deathYear > node.birthYear;
+  const lifespan = hasLifespan ? node.deathYear - node.birthYear : null;
+  const geo = hasLifespan
+    ? new THREE.CylinderGeometry(2, 2, Math.max(2, lifespan * 0.3), 8)
+    : new THREE.SphereGeometry(3, 12, 8);
+
+  const mat = new THREE.MeshLambertMaterial({
+    color,
+    transparent: opacity < 1,
+    opacity,
+  });
+  return new THREE.Mesh(geo, mat);
+}
+
+function applyOverlapColors(focusId) {
+  overlapFocusId = focusId;
+  if (graph) graph.nodeThreeObject(buildNodeObject);
+}
+
+function clearOverlapColors() {
+  overlapFocusId = null;
+  if (graph) graph.nodeThreeObject(buildNodeObject);
+}
+
 function setColorMode(mode) {
   colorMode = mode;
   document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`btn-${mode}`).classList.add('active');
-  if (graph) graph.nodeColor(n => ColorModes.getNodeColor(n, colorMode, surnamePalette));
+  const btn = document.getElementById(`btn-${mode}`);
+  if (btn) btn.classList.add('active');
+  // Clear overlap focus when switching colour modes
+  overlapFocusId = null;
+  if (graph) graph.nodeThreeObject(buildNodeObject);
 }
 
 function flyToNode(nodeId) {
@@ -61,5 +145,7 @@ function flyToNode(nodeId) {
 
 window.setColorMode = setColorMode;
 window.flyToNode = flyToNode;
+window.applyOverlapColors = applyOverlapColors;
+window.clearOverlapColors = clearOverlapColors;
 
 document.addEventListener('DOMContentLoaded', initViz);
