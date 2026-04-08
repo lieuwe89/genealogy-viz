@@ -55,8 +55,23 @@ vizRouter.post('/admin/import', requireAdmin, upload.single('file'), async (req,
   }
 });
 
-// Serve admin SPA under /genealogy-viz/admin (requires auth)
-vizRouter.get('/admin*', requireAdmin, (req, res) => {
+vizRouter.get('/admin/export', requireAdmin, (req, res) => {
+  const db = req.app.locals.db;
+  const persons = db.prepare('SELECT * FROM persons').all();
+  const relationships = db.prepare('SELECT * FROM relationships').all();
+  const roles = db.prepare('SELECT * FROM roles').all();
+  const annotations = db.prepare('SELECT * FROM annotations').all();
+  const sources = db.prepare('SELECT * FROM sources').all();
+  const datasetMeta = db.prepare('SELECT * FROM dataset_meta').all();
+  const exportDate = new Date().toISOString();
+  const dateStr = exportDate.slice(0, 10);
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="genealogy-export-${dateStr}.json"`);
+  res.json({ exportDate, persons, relationships, roles, annotations, sources, datasetMeta });
+});
+
+// Serve admin SPA under /genealogy-viz/admin (login handled client-side)
+vizRouter.get('/admin*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/index.html'));
 });
 

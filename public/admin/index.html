@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <base href="/genealogy-viz/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Genealogy Network</title>
-  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body class="admin-body">
   <!-- Login overlay -->
@@ -22,11 +23,13 @@
 
   <nav class="admin-nav">
     <span class="brand">Genealogy Admin</span>
-    <a href="#persons" class="active" onclick="showTab('persons')">Persons</a>
-    <a href="#relationships" onclick="showTab('relationships')">Relationships</a>
-    <a href="#import" onclick="showTab('import')">Import data</a>
-    <a href="/" style="margin-left:auto">← Visualisation</a>
-    <a href="#" onclick="doLogout()" style="color:#f85149">Log out</a>
+    <a href="#persons" class="active" onclick="showTab(event,'persons',this)">Persons</a>
+    <a href="#relationships" onclick="showTab(event,'relationships',this)">Relationships</a>
+    <a href="#import" onclick="showTab(event,'import',this)">Import data</a>
+    <a href="#" onclick="event.preventDefault();doExport()">Export data</a>
+    <a href="./" style="margin-left:auto">← Visualisation</a>
+    <a href="#" onclick="event.preventDefault();showChangePasswordModal()">Change password</a>
+    <a href="#" onclick="event.preventDefault();doLogout()" style="color:#f85149">Log out</a>
   </nav>
 
   <div class="admin-content">
@@ -109,6 +112,21 @@
     </div>
   </div>
 
-  <script src="/js/admin.js"></script>
+  <!-- Change password modal -->
+  <div id="password-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:500;align-items:center;justify-content:center">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;width:360px">
+      <h2 style="font-size:16px;margin-bottom:16px;color:#e6edf3">Change password</h2>
+      <div class="form-group"><label>Current password</label><input type="password" id="cp-current"></div>
+      <div class="form-group"><label>New password</label><input type="password" id="cp-new"></div>
+      <div class="form-group"><label>Confirm new password</label><input type="password" id="cp-confirm"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary" onclick="doChangePassword()">Change</button>
+        <button class="btn btn-secondary" onclick="closePasswordModal()">Cancel</button>
+      </div>
+      <div id="cp-status" style="font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
 </body>
 </html>

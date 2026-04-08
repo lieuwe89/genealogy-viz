@@ -3,7 +3,7 @@
 let allPersons = [], allRels = [];
 
 async function checkSession() {
-  const r = await fetch('/admin/session');
+  const r = await fetch('admin/session');
   const data = await r.json();
   if (!data.isAdmin) {
     document.getElementById('login-overlay').style.display = 'flex';
@@ -15,7 +15,7 @@ async function checkSession() {
 
 async function doLogin() {
   const password = document.getElementById('login-password').value;
-  const r = await fetch('/admin/login', {
+  const r = await fetch('admin/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password }),
@@ -29,21 +29,21 @@ async function doLogin() {
 }
 
 async function doLogout() {
-  await fetch('/admin/logout', { method: 'POST' });
+  await fetch('admin/logout', { method: 'POST' });
   location.reload();
 }
 
-function showTab(name) {
+function showTab(name, clickedEl) {
   ['persons', 'relationships', 'import'].forEach(t => {
     document.getElementById(`tab-${t}`).style.display = t === name ? '' : 'none';
   });
   document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
-  event.target.classList.add('active');
+  if (clickedEl) clickedEl.classList.add('active');
   if (name === 'relationships') loadRels();
 }
 
 async function loadPersons() {
-  const r = await fetch('/api/graph');
+  const r = await fetch('api/graph');
   const data = await r.json();
   allPersons = data.nodes;
   renderPersonsTable(allPersons);
@@ -74,7 +74,7 @@ async function showPersonForm(id) {
   document.getElementById('person-modal-title').textContent = id ? 'Edit person' : 'Add person';
 
   if (id) {
-    const r = await fetch(`/api/persons/${encodeURIComponent(id)}`);
+    const r = await fetch(`api/persons/${encodeURIComponent(id)}`);
     const p = await r.json();
     document.getElementById('pm-id').value = p.id;
     ['given_name','surname','name_prefix','name_suffix','birth_date','birth_place','death_date','death_place','notes'].forEach(f => {
@@ -102,12 +102,12 @@ async function savePersonForm() {
   fields.forEach(f => { body[f] = document.getElementById(`pm-${f}`)?.value || ''; });
 
   if (id) {
-    await fetch(`/api/persons/${encodeURIComponent(id)}`, {
+    await fetch(`api/persons/${encodeURIComponent(id)}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
   } else {
     body.id = 'P' + Date.now();
-    await fetch('/api/persons', {
+    await fetch('api/persons', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
   }
@@ -118,13 +118,13 @@ async function savePersonForm() {
 async function deletePerson() {
   const id = document.getElementById('pm-id').value;
   if (!confirm(`Delete ${id}? This cannot be undone.`)) return;
-  await fetch(`/api/persons/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await fetch(`api/persons/${encodeURIComponent(id)}`, { method: 'DELETE' });
   closePersonModal();
   loadPersons();
 }
 
 async function loadRels() {
-  const r = await fetch('/api/relationships');
+  const r = await fetch('api/relationships');
   allRels = await r.json();
   const nameMap = {};
   allPersons.forEach(p => { nameMap[p.id] = p.name; });
@@ -146,7 +146,7 @@ async function showRelForm() {
   if (!personBId) return;
   const type = prompt('Type (parent-child / spouse / adopted / custom):', 'custom');
   if (!type) return;
-  await fetch('/api/relationships', {
+  await fetch('api/relationships', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ person_a_id: personAId, person_b_id: personBId, type }),
   });
@@ -155,7 +155,7 @@ async function showRelForm() {
 
 async function deleteRel(id) {
   if (!confirm('Delete this relationship?')) return;
-  await fetch(`/api/relationships/${id}`, { method: 'DELETE' });
+  await fetch(`api/relationships/${id}`, { method: 'DELETE' });
   loadRels();
 }
 
@@ -190,7 +190,7 @@ async function doImport() {
   if (ext === 'xml') {
     fd.append('mapping', document.getElementById('import-mapping').value);
   }
-  const r = await fetch('/admin/import', { method: 'POST', body: fd });
+  const r = await fetch('admin/import', { method: 'POST', body: fd });
   const data = await r.json();
   if (r.ok) {
     status.style.color = '#3fb950';
@@ -200,6 +200,68 @@ async function doImport() {
     status.style.color = '#f85149';
     status.textContent = `Error: ${data.error}`;
   }
+}
+
+function showChangePasswordModal() {
+  const modal = document.getElementById('password-modal');
+  modal.style.display = 'flex';
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
+  document.getElementById('cp-status').textContent = '';
+}
+
+function closePasswordModal() {
+  document.getElementById('password-modal').style.display = 'none';
+}
+
+async function doChangePassword() {
+  const currentPassword = document.getElementById('cp-current').value;
+  const newPassword = document.getElementById('cp-new').value;
+  const confirmPassword = document.getElementById('cp-confirm').value;
+  const status = document.getElementById('cp-status');
+
+  if (!newPassword) {
+    status.style.color = '#f85149';
+    status.textContent = 'New password cannot be empty';
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    status.style.color = '#f85149';
+    status.textContent = 'Passwords do not match';
+    return;
+  }
+
+  const r = await fetch('admin/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (r.ok) {
+    status.style.color = '#3fb950';
+    status.textContent = 'Password changed successfully';
+    setTimeout(() => closePasswordModal(), 1000);
+  } else {
+    const data = await r.json();
+    status.style.color = '#f85149';
+    status.textContent = data.error || 'Failed to change password';
+  }
+}
+
+async function doExport() {
+  const r = await fetch('admin/export');
+  if (!r.ok) { alert('Export failed'); return; }
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `genealogy-export-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function escHtml(str) {
