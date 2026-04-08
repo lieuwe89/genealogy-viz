@@ -100,11 +100,7 @@ function buildNodeObject(node) {
     color = ColorModes.getNodeColor(node, colorMode, surnamePalette);
   }
 
-  const hasLifespan = node.birthYear && node.deathYear && node.deathYear > node.birthYear;
-  const lifespan = hasLifespan ? node.deathYear - node.birthYear : null;
-  const geo = hasLifespan
-    ? new THREE.CylinderGeometry(2, 2, Math.max(2, lifespan * 0.3), 8)
-    : new THREE.SphereGeometry(3, 12, 8);
+  const geo = new THREE.SphereGeometry(3, 12, 8);
 
   const mat = new THREE.MeshLambertMaterial({
     color,
