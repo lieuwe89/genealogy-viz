@@ -144,31 +144,31 @@ function updateLockButton() {
 
 function buildNodeObject(node) {
   if (node._isCluster) {
-    var geo = new THREE.SphereGeometry(node._radius, 16, 12);
-    var opacity = node._level === 'century' ? 0.12 : 0.20;
-    var mat = new THREE.MeshBasicMaterial({
+    const cGeo = new THREE.SphereGeometry(node._radius, 16, 12);
+    const cOpacity = node._level === 'century' ? 0.12 : 0.20;
+    const cMat = new THREE.MeshBasicMaterial({
       color: node._color,
       transparent: true,
-      opacity: opacity,
+      opacity: cOpacity,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
-    var mesh = new THREE.Mesh(geo, mat);
-    var canvas = document.createElement('canvas');
-    canvas.width = 512; canvas.height = 64;
-    var ctx = canvas.getContext('2d');
-    ctx.fillStyle = node._labelColor;
-    ctx.font = '28px monospace';
-    var labelText = node.name;
+    const cMesh = new THREE.Mesh(cGeo, cMat);
+    const cCanvas = document.createElement('canvas');
+    cCanvas.width = 512; cCanvas.height = 64;
+    const cCtx = cCanvas.getContext('2d');
+    cCtx.fillStyle = node._labelColor;
+    cCtx.font = '28px monospace';
+    let labelText = node.name;
     if (node._members) labelText += ' (' + node._members.length + ')';
-    ctx.fillText(labelText, 8, 44);
-    var tex = new THREE.CanvasTexture(canvas);
-    var spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.7 });
-    var sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(120, 30, 1);
-    sprite.position.set(0, node._radius + 10, 0);
-    mesh.add(sprite);
-    return mesh;
+    cCtx.fillText(labelText, 8, 44);
+    const cTex = new THREE.CanvasTexture(cCanvas);
+    const cSpriteMat = new THREE.SpriteMaterial({ map: cTex, transparent: true, opacity: 0.7 });
+    const cSprite = new THREE.Sprite(cSpriteMat);
+    cSprite.scale.set(120, 30, 1);
+    cSprite.position.set(0, node._radius + 10, 0);
+    cMesh.add(cSprite);
+    return cMesh;
   }
 
   let color;
