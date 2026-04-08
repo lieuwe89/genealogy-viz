@@ -280,6 +280,10 @@ function renderEditMode(body, data) {
     <button class="btn btn-secondary" onclick="addAnnotation()" style="width:100%">+ Add annotation</button>
   </div>`;
 
+  html += `<div class="panel-section">
+    <button class="btn btn-danger" onclick="deletePerson()" style="width:100%">Persoon verwijderen</button>
+  </div>`;
+
   body.innerHTML = html;
 }
 
@@ -337,6 +341,26 @@ async function deleteAnnotationImage(annotationId) {
     return;
   }
   await openPanel(currentPersonId);
+}
+
+async function deletePerson() {
+  const name = [currentData.given_name, currentData.surname].filter(Boolean).join(' ') || '(unknown)';
+  if (!confirm(`Weet je zeker dat je "${name}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
+  const res = await fetch(`api/persons/${encodeURIComponent(currentPersonId)}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert('Verwijderen mislukt: ' + (err.error || res.status));
+    return;
+  }
+  closePanel();
+  if (window.graphData) {
+    window.graphData.nodes = window.graphData.nodes.filter(n => String(n.id) !== String(currentPersonId));
+    window.graphData.links = window.graphData.links.filter(l =>
+      String(l.source?.id ?? l.source) !== String(currentPersonId) &&
+      String(l.target?.id ?? l.target) !== String(currentPersonId)
+    );
+    if (window.graph) window.graph.graphData(window.graphData);
+  }
 }
 
 async function addAnnotation() {
@@ -412,3 +436,4 @@ window.startCompareSelect = startCompareSelect;
 window.cancelCompareSelect = cancelCompareSelect;
 window.uploadAnnotationImage = uploadAnnotationImage;
 window.deleteAnnotationImage = deleteAnnotationImage;
+window.deletePerson = deletePerson;
