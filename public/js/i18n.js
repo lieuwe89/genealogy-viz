@@ -40,6 +40,10 @@ window.i18n = (function () {
     document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
       el.title = t(el.dataset.i18nTitle);
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    window.dispatchEvent(new CustomEvent('langchange'));
   }
 
   function getLang() { return lang; }

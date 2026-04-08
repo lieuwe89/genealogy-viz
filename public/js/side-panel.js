@@ -67,37 +67,37 @@ function renderPanel(data) {
 
   let html = '';
 
-  html += `<div class="panel-section">
-    <div class="panel-label">Vitals</div>
-    <div>${data.sex === 'M' ? 'Male' : data.sex === 'F' ? 'Female' : 'Unknown'}</div>`;
+  html += '<div class="panel-section">' +
+    '<div class="panel-label">' + escHtml(i18n.t('panel_vitals')) + '</div>' +
+    '<div>' + (data.sex === 'M' ? escHtml(i18n.t('panel_sex_male')) : data.sex === 'F' ? escHtml(i18n.t('panel_sex_female')) : escHtml(i18n.t('panel_sex_unknown'))) + '</div>';
   if (data.birth_date) html += `<div>b. ${escHtml(data.birth_date)}${data.birth_place ? ' · ' + escHtml(data.birth_place) : ''}</div>`;
   if (data.death_date) html += `<div>d. ${escHtml(data.death_date)}${data.death_place ? ' · ' + escHtml(data.death_place) : ''}</div>`;
-  html += `</div>`;
+  html += '</div>';
 
   if (data.roles.length) {
-    html += `<div class="panel-section"><div class="panel-label">Roles</div>`;
+    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_roles')) + '</div>';
     html += data.roles.map(r => `<span class="role-badge">${escHtml(r.label)}</span>`).join('');
-    html += `</div>`;
+    html += '</div>';
   }
 
   if (data.relationships.length) {
-    html += `<div class="panel-section"><div class="panel-label">Connections</div>`;
+    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_connections')) + '</div>';
     html += data.relationships.map(r => {
       const otherId = r.person_a_id === data.id ? r.person_b_id : r.person_a_id;
       const otherName = [r.name_prefix, r.given_name, r.surname].filter(Boolean).join(' ');
       return `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)} <span style="color:#6e7681;font-size:11px">(${escHtml(r.type)})</span></a>` +
-        `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-bottom:4px" onclick="openCompare('${escHtml(otherId)}')">Tijdlijn</button>`;
+        `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-bottom:4px" onclick="openCompare('${escHtml(otherId)}')">${escHtml(i18n.t('timeline_button'))}</button>`;
     }).join('');
-    html += `</div>`;
+    html += '</div>';
   }
 
   if (data.notes) {
-    html += `<div class="panel-section"><div class="panel-label">Notes</div><div style="font-size:12px;color:#8b949e">${escHtml(data.notes)}</div></div>`;
+    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_notes')) + '</div><div style="font-size:12px;color:#8b949e">' + escHtml(data.notes) + '</div></div>';
   }
 
-  html += `<div class="panel-section"><div class="panel-label">Annotations & Links</div>`;
+  html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_annotations')) + '</div>';
   if (data.annotations.length === 0) {
-    html += `<div style="color:#6e7681;font-size:12px">No annotations yet.</div>`;
+    html += '<div style="color:#6e7681;font-size:12px">' + escHtml(i18n.t('panel_no_annotations')) + '</div>';
   } else {
     html += data.annotations.map(a => `
       <div class="annotation-item">
@@ -106,12 +106,12 @@ function renderPanel(data) {
       </div>
     `).join('');
   }
-  html += `</div>`;
+  html += '</div>';
 
   if (window.__isAdmin) {
-    html += `<div style="padding:12px 16px">
-      <button class="btn btn-secondary" onclick="enterEditMode()" style="width:100%">Edit this person</button>
-    </div>`;
+    html += '<div style="padding:12px 16px">' +
+      '<button class="btn btn-secondary" onclick="enterEditMode()" style="width:100%">' + escHtml(i18n.t('panel_edit')) + '</button>' +
+      '</div>';
   }
 
   body.innerHTML = html;
@@ -132,12 +132,12 @@ function renderTwoPersonMode() {
 
   // Find shortest path
   if (!window.graphData || !window.OverlapLogic) {
-    body.innerHTML = '<div class="panel-section" style="color:#6e7681">Graph data niet beschikbaar.</div>';
+    body.innerHTML = '<div class="panel-section" style="color:#6e7681">' + escHtml(i18n.t('timeline_no_graph')) + '</div>';
     return;
   }
   const path = OverlapLogic.shortestPath(window.graphData, currentPersonId, secondPersonId);
   if (path.length === 0) {
-    body.innerHTML = '<div class="panel-section" style="color:#6e7681">Geen verbinding gevonden tussen deze twee personen.</div>';
+    body.innerHTML = '<div class="panel-section" style="color:#6e7681">' + escHtml(i18n.t('timeline_no_connection')) + '</div>';
     return;
   }
 
@@ -148,7 +148,7 @@ function renderTwoPersonMode() {
   // Determine axis range
   const allYears = lifespans.flatMap(l => [l.birthYear, l.deathYear]).filter(Boolean);
   if (allYears.length === 0) {
-    body.innerHTML = '<div class="panel-section" style="color:#6e7681">Geen jaartallen beschikbaar voor tijdlijn.</div>';
+    body.innerHTML = '<div class="panel-section" style="color:#6e7681">' + escHtml(i18n.t('timeline_no_years')) + '</div>';
     return;
   }
   const axisMin = Math.min(...allYears) - 5;
@@ -156,16 +156,16 @@ function renderTwoPersonMode() {
   const axisSpan = axisMax - axisMin || 1;
 
   // Build HTML
-  let html = `<div class="panel-section"><div class="panel-label">Tijdlijn — kortste route (${path.length} personen)</div>`;
+  let html = '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('timeline_heading').replace('{n}', path.length)) + '</div>';
 
   // Axis labels: show ~4 ticks
   const tickStep = Math.ceil(axisSpan / 4 / 50) * 50 || 50;
-  html += `<div class="timeline-axis">`;
+  html += '<div class="timeline-axis">';
   for (let y = Math.ceil(axisMin / tickStep) * tickStep; y <= axisMax; y += tickStep) {
     const pct = ((y - axisMin) / axisSpan * 100).toFixed(1);
     html += `<span class="timeline-axis-label" style="left:${pct}%">${y}</span>`;
   }
-  html += `</div>`;
+  html += '</div>';
 
   // One bar per path node
   pathNodes.forEach((node, i) => {
@@ -173,9 +173,9 @@ function renderTwoPersonMode() {
     const isFocal = String(node.id) === String(currentPersonId) || String(node.id) === String(secondPersonId);
     const shortName = [node.givenName, node.surname].filter(Boolean).join(' ') || node.name || '?';
 
-    html += `<div class="timeline-bar-row">`;
+    html += '<div class="timeline-bar-row">';
     html += `<div class="timeline-bar-name" title="${escHtml(node.name || '')}">${escHtml(shortName)}</div>`;
-    html += `<div class="timeline-bar-track">`;
+    html += '<div class="timeline-bar-track">';
 
     if (ls.birthYear) {
       const left = ((ls.birthYear - axisMin) / axisSpan * 100).toFixed(1);
@@ -183,17 +183,33 @@ function renderTwoPersonMode() {
       const cls = ['timeline-bar-fill', ls.estimated ? 'estimated' : '', isFocal ? 'focal' : ''].filter(Boolean).join(' ');
       html += `<div class="${cls}" style="left:${left}%;width:${width}%"></div>`;
     }
-    html += `</div>`;
-    if (ls.estimated) html += `<span class="timeline-estimated-label">geschat</span>`;
-    html += `</div>`;
+    html += '</div>';
+    if (ls.estimated) html += '<span class="timeline-estimated-label">' + escHtml(i18n.t('timeline_estimated')) + '</span>';
+    html += '</div>';
   });
 
-  html += `</div>`; // panel-section
+  html += '</div>'; // panel-section
+
+  // Relationship label section (per D-10, D-11, D-13)
+  html += '<div class="panel-section">';
+  html += '<div class="panel-label">' + escHtml(i18n.t('rel_section_heading')) + '</div>';
+  if (window.RelPath) {
+    var relResult = RelPath.classifyRelationship(path, window.graphData);
+    var relLabel = RelPath.formatRelLabel(relResult, i18n.t);
+    html += '<p style="font-size:14px;color:#c9d1d9">' +
+      '<span style="color:#6e7681">' + escHtml(i18n.t('rel_prefix')) + ' </span>' +
+      escHtml(relLabel) + '</p>';
+  } else {
+    html += '<p style="font-size:14px;color:#6e7681">' + escHtml(i18n.t('rel_error')) + '</p>';
+  }
+  html += '</div>';
 
   // Back button
-  html += `<div style="padding:12px 16px">
-    <button class="btn btn-secondary" onclick="backToSingle()" style="width:100%">Terug naar ${escHtml([currentData.given_name, currentData.surname].filter(Boolean).join(' '))}</button>
-  </div>`;
+  html += '<div style="padding:12px 16px">' +
+    '<button class="btn btn-secondary" onclick="backToSingle()" style="width:100%">' +
+    escHtml(i18n.t('back_to_single').replace('{name}', [currentData.given_name, currentData.surname].filter(Boolean).join(' '))) +
+    '</button>' +
+    '</div>';
 
   body.innerHTML = html;
 }
@@ -224,9 +240,9 @@ function renderEditMode(body, data) {
     } else {
       html += `<input id="ef-${f.key}" value="${escHtml(data[f.key] || '')}">`;
     }
-    html += `</div>`;
+    html += '</div>';
   }
-  html += `</div>`;
+  html += '</div>';
 
   html += `<div class="panel-section">
     <div class="panel-label">Add annotation</div>
@@ -297,6 +313,15 @@ document.getElementById('side-panel').addEventListener('click', e => {
     const id = link.dataset.id;
     flyToNode(id);
     openPanel(id);
+  }
+});
+
+// Re-render panel on language change
+window.addEventListener('langchange', function() {
+  if (secondPersonId && secondPersonData) {
+    renderTwoPersonMode();
+  } else if (currentData) {
+    renderPanel(currentData);
   }
 });
 
