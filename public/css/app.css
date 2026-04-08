@@ -123,6 +123,20 @@ body {
   font-size: 12px;
 }
 .annotation-item a { color: #58a6ff; }
+.annotation-img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-top: 6px;
+  border: 1px solid #30363d;
+}
+.annotation-img-caption {
+  font-size: 11px;
+  color: #6e7681;
+  margin-top: 4px;
+}
 
 /* Edit mode inputs */
 .edit-field { margin-bottom: 10px; }

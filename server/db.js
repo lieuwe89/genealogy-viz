@@ -65,6 +65,10 @@ function initDb(path) {
     );
   `);
 
+  // Migrations: add image columns to annotations if not present
+  try { db.exec(`ALTER TABLE annotations ADD COLUMN image_path TEXT DEFAULT ''`); } catch (_) {}
+  try { db.exec(`ALTER TABLE annotations ADD COLUMN image_caption TEXT DEFAULT ''`); } catch (_) {}
+
   return db;
 }
 

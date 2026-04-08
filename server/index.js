@@ -11,8 +11,25 @@ const personsRouter = require('./api/persons');
 const relsRouter = require('./api/relationships');
 const annotationsRouter = require('./api/annotations');
 
+const fs = require('fs');
+
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+const UPLOADS_DIR = path.join(__dirname, '../public/uploads');
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const imageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+    filename: (_req, file, cb) => cb(null, `${Date.now()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+app.locals.imageUpload = imageUpload;
 
 const db = initDb(process.env.DB_PATH || './data/genealogy.db');
 app.locals.db = db;

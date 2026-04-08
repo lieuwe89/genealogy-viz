@@ -103,6 +103,8 @@ function renderPanel(data) {
       <div class="annotation-item">
         ${a.content ? `<div>${escHtml(a.content)}</div>` : ''}
         ${a.url ? `<a href="${isSafeUrl(a.url) ? escHtml(a.url) : '#'}" target="_blank" rel="noopener">${escHtml(a.url_label || a.url)}</a>` : ''}
+        ${a.image_path ? `<img src="${escHtml(a.image_path)}" class="annotation-img" alt="${escHtml(a.image_caption || '')}">` : ''}
+        ${a.image_path && a.image_caption ? `<div class="annotation-img-caption">${escHtml(a.image_caption)}</div>` : ''}
       </div>
     `).join('');
   }
@@ -250,6 +252,26 @@ function renderEditMode(body, data) {
   }
   html += '</div>';
 
+  if (data.annotations.length) {
+    html += `<div class="panel-section"><div class="panel-label">Afbeeldingen bij annotaties</div>`;
+    html += data.annotations.map(a => {
+      let block = `<div class="annotation-item" style="margin-bottom:8px">`;
+      block += `<div style="font-size:11px;color:#8b949e;margin-bottom:6px">${escHtml(a.content || a.url || '(annotatie #' + a.id + ')')}</div>`;
+      if (a.image_path) {
+        block += `<img src="${escHtml(a.image_path)}" class="annotation-img" alt="${escHtml(a.image_caption || '')}">`;
+        if (a.image_caption) block += `<div class="annotation-img-caption">${escHtml(a.image_caption)}</div>`;
+        block += `<button class="btn btn-danger" style="font-size:11px;padding:3px 10px;margin-top:6px" onclick="deleteAnnotationImage(${a.id})">Verwijder afbeelding</button>`;
+      } else {
+        block += `<div class="edit-field"><label>Afbeelding</label><input type="file" id="img-file-${a.id}" accept="image/*"></div>`;
+        block += `<div class="edit-field"><label>Bijschrift</label><input id="img-caption-${a.id}" placeholder="Optioneel bijschrift"></div>`;
+        block += `<button class="btn btn-secondary" style="font-size:11px;padding:3px 10px" onclick="uploadAnnotationImage(${a.id})">+ Afbeelding toevoegen</button>`;
+      }
+      block += `</div>`;
+      return block;
+    }).join('');
+    html += `</div>`;
+  }
+
   html += `<div class="panel-section">
     <div class="panel-label">Add annotation</div>
     <div class="edit-field"><label>Text</label><input id="new-ann-content"></div>
@@ -286,6 +308,35 @@ function enterEditMode() {
   editMode = true;
   renderPanel(currentData);
   document.getElementById('panel-edit-actions').style.display = 'flex';
+}
+
+async function uploadAnnotationImage(annotationId) {
+  const fileInput = document.getElementById(`img-file-${annotationId}`);
+  const caption = document.getElementById(`img-caption-${annotationId}`).value;
+  if (!fileInput || !fileInput.files[0]) return;
+  const formData = new FormData();
+  formData.append('image', fileInput.files[0]);
+  formData.append('caption', caption);
+  const res = await fetch(`api/annotations/${encodeURIComponent(annotationId)}/image`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert('Upload mislukt: ' + (err.error || res.status));
+    return;
+  }
+  await openPanel(currentPersonId);
+}
+
+async function deleteAnnotationImage(annotationId) {
+  const res = await fetch(`api/annotations/${encodeURIComponent(annotationId)}/image`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert('Verwijderen mislukt: ' + (err.error || res.status));
+    return;
+  }
+  await openPanel(currentPersonId);
 }
 
 async function addAnnotation() {
@@ -359,3 +410,5 @@ window.cancelEdit = cancelEdit;
 window.addAnnotation = addAnnotation;
 window.startCompareSelect = startCompareSelect;
 window.cancelCompareSelect = cancelCompareSelect;
+window.uploadAnnotationImage = uploadAnnotationImage;
+window.deleteAnnotationImage = deleteAnnotationImage;
