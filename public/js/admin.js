@@ -33,7 +33,8 @@ async function doLogout() {
   location.reload();
 }
 
-function showTab(name, clickedEl) {
+function showTab(e, name, clickedEl) {
+  if (e) e.preventDefault();
   ['persons', 'relationships', 'import'].forEach(t => {
     document.getElementById(`tab-${t}`).style.display = t === name ? '' : 'none';
   });
