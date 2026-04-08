@@ -15,6 +15,9 @@ primary_region = 'ams'
   auto_extend_size_increment = '1GB'
   auto_extend_size_limit = '10GB'
 
+[env]
+  PORT = "8080"
+
 [http_service]
   internal_port = 8080
   force_https = true
