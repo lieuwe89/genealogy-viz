@@ -21,9 +21,9 @@ jobs:
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Sync files
+      - name: Deploy files
         run: |
-          rsync -az --delete \
+          tar czf - \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='node_modules' \
@@ -35,17 +35,13 @@ jobs:
             --exclude='scripts' \
             --exclude='Dockerfile' \
             --exclude='fly.toml' \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            . ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.DEPLOY_PATH_PLAYGROUND }}/
-
-      - name: Install dependencies and restart
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "cd ${{ secrets.DEPLOY_PATH_PLAYGROUND }} && \
-             npm install --omit=dev --prefer-offline && \
-             pm2 restart genealogy-viz --update-env || pm2 start server/index.js --name genealogy-viz"
+            --exclude='.planning' \
+            . | ssh -i ~/.ssh/deploy_key \
+                -o StrictHostKeyChecking=no \
+                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+                "tar xzf - -C ${{ secrets.DEPLOY_PATH_PLAYGROUND }} && \
+                 mkdir -p ${{ secrets.DEPLOY_PATH_PLAYGROUND }}/tmp && \
+                 touch ${{ secrets.DEPLOY_PATH_PLAYGROUND }}/tmp/restart.txt"
 
       - name: Cleanup SSH key
         if: always()
