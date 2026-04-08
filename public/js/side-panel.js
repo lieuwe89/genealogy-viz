@@ -7,7 +7,7 @@ let editMode = false;
 async function openPanel(personId) {
   currentPersonId = personId;
   editMode = false;
-  const res = await fetch(`/api/persons/${encodeURIComponent(personId)}`);
+  const res = await fetch(`api/persons/${encodeURIComponent(personId)}`);
   if (!res.ok) return;
   currentData = await res.json();
   renderPanel(currentData);
@@ -139,7 +139,7 @@ async function saveEdit() {
     const el = document.getElementById(`ef-${f}`);
     if (el) updates[f] = el.value;
   }
-  await fetch(`/api/persons/${encodeURIComponent(currentPersonId)}`, {
+  await fetch(`api/persons/${encodeURIComponent(currentPersonId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
@@ -163,7 +163,7 @@ async function addAnnotation() {
   const content = document.getElementById('new-ann-content').value;
   const url = document.getElementById('new-ann-url').value;
   const url_label = document.getElementById('new-ann-label').value;
-  await fetch('/api/annotations', {
+  await fetch('api/annotations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ person_id: currentPersonId, content, url, url_label }),
