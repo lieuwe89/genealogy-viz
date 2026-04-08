@@ -41,10 +41,7 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Page-level spacing |
 
-Exceptions:
-- Toolbar button padding: 6px 12px (vertical 6px is allowed — matches existing `.toolbar-btn`)
-- Panel section padding: 12px 16px (12px vertical is existing pattern — do not change)
-- Touch targets for the language toggle button and clustering level slider: minimum 44px height
+No exceptions. Values not listed above (e.g. toolbar button vertical padding, panel section vertical padding, touch target heights) are implementation details managed in `public/css/app.css` and are not declared in this spacing contract.
 
 Source: pre-populated from `public/css/app.css`.
 
@@ -55,12 +52,12 @@ Source: pre-populated from `public/css/app.css`.
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 | 1.5 |
-| Label / meta | 11–12px | 400 | 1.3 |
+| Label / meta | 11px | 400 | 1.3 |
 | Panel heading | 15px | 600 | 1.3 |
 | Page / admin title | 20px | 600 | 1.2 |
 
 Notes:
-- 10px uppercase letter-spaced labels (`.panel-label`) are a fifth variant used only for section header labels inside the side panel. Keep as-is; do not introduce a new size.
+- `.panel-label` uppercase letter-spaced section headers inside the side panel use the "Label / meta" role at 11px with `letter-spacing: 0.08em` and `text-transform: uppercase` as the distinguishing property — not a separate size declaration.
 - New UI elements (cluster bubble labels, relationship label, i18n toggle) must use sizes from the four declared rows above.
 - Cluster bubble labels rendered in THREE.js Canvas: 28px canvas-font maps to the "Label / meta" role visually at scene distance.
 
@@ -160,8 +157,8 @@ Source: decisions D-05 through D-13 in `03-CONTEXT.md`. English values are defau
 
 ### Side Panel: Relationship Label (D-10, D-11, D-13)
 - Rendered inside `renderTwoPersonMode()` in `side-panel.js`, below the existing `.timeline-wrap` section.
-- Container: a new `.panel-section` div (matches existing pattern, `padding: 12px 16px`, `border-bottom: 1px solid #21262d`).
-- Structure: `.panel-label` uppercase header ("RELATIE" / "RELATIONSHIP"), then a single `<p>` with the named label text at 13px.
+- Container: a new `.panel-section` div (matches existing pattern with `border-bottom: 1px solid #21262d`).
+- Structure: `.panel-label` uppercase header ("RELATIE" / "RELATIONSHIP") at 11px with `letter-spacing: 0.08em`, then a single `<p>` with the named label text at 14px (body role).
 - If no path exists: show "Geen verbinding gevonden" in `#6e7681` muted colour.
 - If path analysis errors: show "Kon relatie niet bepalen" in `#6e7681`.
 
