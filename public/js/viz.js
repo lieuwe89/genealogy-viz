@@ -3,14 +3,12 @@
 
 let graph, graphData, colorMode = 'role', surnamePalette = {};
 let overlapFocusId = null; // null = no overlap mode active
-let currentClusterLevel = 'persons';
 
 async function initViz() {
   const res = await fetch('api/graph');
   graphData = await res.json();
   window.graphData = graphData;
   surnamePalette = ColorModes.buildSurnamePalette(graphData.nodes);
-  if (window.Clustering) Clustering.init(graphData);
 
   const years = graphData.nodes.map(n => n.birthYear).filter(Boolean);
   const minYear = years.length ? Math.min(...years) : 1700;
@@ -33,19 +31,9 @@ async function initViz() {
     .linkWidth(l => l.type === 'spouse' ? 1.5 : 0.8)
     .linkOpacity(0.4)
     .onNodeClick(function(node) {
-      if (node._isCluster) {
-        var finer = Clustering.finerLevel(currentClusterLevel);
-        var dist = 80;
-        graph.cameraPosition(
-          { x: (node.x || 0) + dist, y: (node.y || 0) + dist, z: (node.z || 0) + dist },
-          node,
-          600
-        );
-        if (Clustering.isLocked()) {
-          Clustering.setLocked(false);
-          updateLockButton();
-        }
-        applyClusterLevel(finer);
+      if (window.isSelectingCompare) {
+        window.isSelectingCompare = false;
+        openCompare(node.id);
         return;
       }
       openPanel(node.id);
@@ -93,29 +81,6 @@ async function initViz() {
     scene.add(sprite);
   });
 
-  // Auto-clustering based on camera distance
-  let clusterDebounceTimer = null;
-  function onCameraChange() {
-    if (clusterDebounceTimer) clearTimeout(clusterDebounceTimer);
-    clusterDebounceTimer = setTimeout(function() {
-      if (!window.Clustering || Clustering.isLocked()) return;
-      var dist = graph.camera().position.length();
-      var newLevel = Clustering.getAutoLevel(dist);
-      if (newLevel !== currentClusterLevel) {
-        applyClusterLevel(newLevel);
-      }
-    }, 200);
-  }
-  try {
-    var controls = graph.controls();
-    controls.addEventListener('change', onCameraChange);
-  } catch (e) {
-    (function pollCamera() {
-      onCameraChange();
-      requestAnimationFrame(pollCamera);
-    })();
-  }
-
   const session = await fetch('admin/session').then(r => r.json());
   if (session.isAdmin) {
     document.getElementById('admin-badge').style.display = 'block';
@@ -123,54 +88,7 @@ async function initViz() {
   }
 }
 
-function applyClusterLevel(level) {
-  if (!window.Clustering) return;
-  currentClusterLevel = level;
-  Clustering.setLevel(level);
-  var sel = document.getElementById('cluster-level');
-  if (sel) sel.value = level;
-  var clustered = Clustering.buildClusteredData(level, window.graphData, surnamePalette);
-  graph.graphData(clustered);
-  graph.nodeThreeObject(buildNodeObject);
-}
-
-function updateLockButton() {
-  var btn = document.getElementById('btn-cluster-lock');
-  if (!btn || !window.i18n) return;
-  var locked = Clustering.isLocked();
-  btn.textContent = i18n.t(locked ? 'cluster_locked' : 'cluster_auto');
-  btn.classList.toggle('active', locked);
-}
-
 function buildNodeObject(node) {
-  if (node._isCluster) {
-    const cGeo = new THREE.SphereGeometry(node._radius, 16, 12);
-    const cOpacity = node._level === 'century' ? 0.12 : 0.20;
-    const cMat = new THREE.MeshBasicMaterial({
-      color: node._color,
-      transparent: true,
-      opacity: cOpacity,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    const cMesh = new THREE.Mesh(cGeo, cMat);
-    const cCanvas = document.createElement('canvas');
-    cCanvas.width = 512; cCanvas.height = 64;
-    const cCtx = cCanvas.getContext('2d');
-    cCtx.fillStyle = node._labelColor;
-    cCtx.font = '28px monospace';
-    let labelText = node.name;
-    if (node._members) labelText += ' (' + node._members.length + ')';
-    cCtx.fillText(labelText, 8, 44);
-    const cTex = new THREE.CanvasTexture(cCanvas);
-    const cSpriteMat = new THREE.SpriteMaterial({ map: cTex, transparent: true, opacity: 0.7 });
-    const cSprite = new THREE.Sprite(cSpriteMat);
-    cSprite.scale.set(120, 30, 1);
-    cSprite.position.set(0, node._radius + 10, 0);
-    cMesh.add(cSprite);
-    return cMesh;
-  }
-
   let color;
   let opacity = 1.0;
 
@@ -232,24 +150,3 @@ window.setColorMode = setColorMode;
 window.flyToNode = flyToNode;
 window.applyOverlapColors = applyOverlapColors;
 window.clearOverlapColors = clearOverlapColors;
-
-window.setClusterLevel = function(level) {
-  applyClusterLevel(level);
-};
-
-window.toggleClusterLock = function() {
-  if (!window.Clustering) return;
-  var locked = !Clustering.isLocked();
-  Clustering.setLocked(locked);
-  updateLockButton();
-};
-
-window.addEventListener('langchange', function() {
-  updateLockButton();
-  var sel = document.getElementById('cluster-level');
-  if (sel && window.i18n) {
-    sel.querySelectorAll('option[data-i18n]').forEach(function(opt) {
-      opt.textContent = i18n.t(opt.dataset.i18n);
-    });
-  }
-});

@@ -1,5 +1,7 @@
 {
   "lang_toggle_label": "NL",
+  "compare_select_prompt": "Compare with another person",
+  "compare_select_cancel": "Cancel comparison",
   "cluster_auto": "Clusters: auto",
   "cluster_locked": "Clusters: locked",
   "cluster_level_label": "Cluster level",

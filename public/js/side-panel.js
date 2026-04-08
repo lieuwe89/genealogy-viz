@@ -108,8 +108,14 @@ function renderPanel(data) {
   }
   html += '</div>';
 
+  // Compare button — clicking it puts the graph in compare-selection mode
+  html += '<div style="padding:0 16px 12px">' +
+    '<button class="btn btn-secondary" id="btn-compare-select" onclick="startCompareSelect()" style="width:100%">' +
+    escHtml(i18n.t('compare_select_prompt')) + '</button>' +
+    '</div>';
+
   if (window.__isAdmin) {
-    html += '<div style="padding:12px 16px">' +
+    html += '<div style="padding:0 16px 12px">' +
       '<button class="btn btn-secondary" onclick="enterEditMode()" style="width:100%">' + escHtml(i18n.t('panel_edit')) + '</button>' +
       '</div>';
   }
@@ -325,6 +331,24 @@ window.addEventListener('langchange', function() {
   }
 });
 
+function startCompareSelect() {
+  window.isSelectingCompare = true;
+  const btn = document.getElementById('btn-compare-select');
+  if (btn) {
+    btn.textContent = i18n.t('compare_select_cancel');
+    btn.onclick = cancelCompareSelect;
+  }
+}
+
+function cancelCompareSelect() {
+  window.isSelectingCompare = false;
+  const btn = document.getElementById('btn-compare-select');
+  if (btn) {
+    btn.textContent = i18n.t('compare_select_prompt');
+    btn.onclick = startCompareSelect;
+  }
+}
+
 window.openPanel = openPanel;
 window.closePanel = closePanel;
 window.openCompare = openCompare;
@@ -333,3 +357,5 @@ window.enterEditMode = enterEditMode;
 window.saveEdit = saveEdit;
 window.cancelEdit = cancelEdit;
 window.addAnnotation = addAnnotation;
+window.startCompareSelect = startCompareSelect;
+window.cancelCompareSelect = cancelCompareSelect;

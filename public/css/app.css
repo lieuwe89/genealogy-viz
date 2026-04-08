@@ -31,17 +31,6 @@ body {
 }
 .toolbar-btn:hover { background: #21262d; }
 .toolbar-btn.active { background: #1f6feb; border-color: #388bfd; color: #fff; }
-.toolbar-select {
-  background: #161b22;
-  border: 1px solid #30363d;
-  color: #c9d1d9;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  max-width: 140px;
-}
-.toolbar-select:focus { outline: none; border-color: #388bfd; }
 
 /* Admin badge */
 #admin-badge {
