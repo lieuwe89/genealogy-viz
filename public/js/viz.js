@@ -1,22 +1,7 @@
 'use strict';
-/* global ForceGraph3D, ColorModes, THREE */
+/* global ForceGraph3D, ColorModes */
 
 let graph, graphData, colorMode = 'role', surnamePalette = {};
-
-function buildNodeObject(node) {
-  const color = ColorModes.getNodeColor(node, colorMode, surnamePalette);
-  if (node.birthYear && node.deathYear && node.deathYear > node.birthYear) {
-    const lifespan = node.deathYear - node.birthYear;
-    const height = Math.max(2, lifespan * 0.3);
-    const radius = 2;
-    const geometry = new THREE.CylinderGeometry(radius, radius, height, 8);
-    const material = new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.95 });
-    return new THREE.Mesh(geometry, material);
-  }
-  const geometry = new THREE.SphereGeometry(3, 12, 8);
-  const material = new THREE.MeshLambertMaterial({ color, transparent: true, opacity: 0.95 });
-  return new THREE.Mesh(geometry, material);
-}
 
 async function initViz() {
   const res = await fetch('api/graph');
@@ -38,8 +23,9 @@ async function initViz() {
     .backgroundColor('#0d1117')
     .graphData(graphData)
     .nodeLabel(n => n.name)
-    .nodeThreeObject(buildNodeObject)
-    .nodeThreeObjectExtend(false)
+    .nodeColor(n => ColorModes.getNodeColor(n, colorMode, surnamePalette))
+    .nodeVal(3)
+    .nodeOpacity(0.95)
     .linkColor(l => l.type === 'spouse' ? '#6e7681' : '#374151')
     .linkWidth(l => l.type === 'spouse' ? 1.5 : 0.8)
     .linkOpacity(0.4)
@@ -61,7 +47,7 @@ function setColorMode(mode) {
   colorMode = mode;
   document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`btn-${mode}`).classList.add('active');
-  if (graph) graph.nodeThreeObject(buildNodeObject);
+  if (graph) graph.nodeColor(n => ColorModes.getNodeColor(n, colorMode, surnamePalette));
 }
 
 function flyToNode(nodeId) {
