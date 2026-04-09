@@ -38,7 +38,11 @@ async function initViz() {
   graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('graph-container'))
     .backgroundColor(initBg)
     .graphData(graphData)
-    .nodeLabel(n => n.name)
+    .nodeLabel(n => {
+      const birth = n.birthYear || '?';
+      const death = n.deathYear || '?';
+      return `<span style="font-weight:600">${n.name}</span><br><span style="font-size:0.85em;opacity:0.7">[${birth} – ${death}]</span>`;
+    })
     .nodeThreeObject(buildNodeObject)
     .nodeThreeObjectExtend(false)
     .linkColor(getLinkColor)
@@ -59,6 +63,11 @@ async function initViz() {
     });
 
   window.graph = graph; // expose for theme switcher
+
+  // Keep canvas sized correctly when phone rotates or browser chrome resizes
+  window.addEventListener('resize', () => {
+    graph.width(window.innerWidth).height(window.innerHeight);
+  });
 
   // ─── Time-direction background elements ──────────────────────────────────
   const scene = graph.scene();

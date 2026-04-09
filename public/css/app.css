@@ -41,7 +41,7 @@ body {
   overflow: hidden;
 }
 
-#graph-container { width: 100vw; height: 100vh; }
+#graph-container { width: 100vw; height: 100vh; width: 100dvw; height: 100dvh; }
 
 /* Toolbar */
 #toolbar {
@@ -485,6 +485,43 @@ body {
   background: var(--bg3);
   color: var(--text);
   box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+}
+
+/* Burger menu — portrait phone only */
+#burger-btn {
+  display: none;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  z-index: 101;
+}
+#toolbar-menu {
+  display: contents; /* default: inline with the toolbar */
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  #burger-btn { display: block; }
+  #toolbar-menu {
+    display: none;
+    position: fixed;
+    top: 52px;
+    left: 16px;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  #toolbar-menu.open { display: flex; }
+  #toolbar-menu .toolbar-divider { display: none; }
 }
 
 /* Timeline bars in side panel */

@@ -11,13 +11,16 @@
   <div id="graph-container"></div>
 
   <div id="toolbar">
-    <button class="toolbar-btn active" id="btn-role" data-i18n="toolbar_role" onclick="setColorMode('role')">By Role</button>
-    <button class="toolbar-btn" id="btn-surname" data-i18n="toolbar_surname" onclick="setColorMode('surname')">By Surname</button>
-    <button class="toolbar-btn" id="btn-sex" data-i18n="toolbar_sex" onclick="setColorMode('sex')">By Sex</button>
-    <button class="toolbar-btn" id="btn-overlap" data-i18n="toolbar_overlap" onclick="setColorMode('overlap')" data-i18n-title="toolbar_overlap_title">Overlap</button>
-    <button class="toolbar-btn" id="btn-lang" data-i18n="lang_toggle_label" onclick="i18n.toggleLang()">EN</button>
-    <div class="toolbar-divider"></div>
-    <button class="toolbar-btn toolbar-toggle active" id="btn-time-arrow" data-i18n="toolbar_time_arrow" onclick="toggleTimeArrow()">Tijdpijl</button>
+    <button id="burger-btn" onclick="(function(){document.getElementById('toolbar-menu').classList.toggle('open')})()" aria-label="Menu">☰</button>
+    <div id="toolbar-menu">
+      <button class="toolbar-btn active" id="btn-role" data-i18n="toolbar_role" onclick="setColorMode('role')">By Role</button>
+      <button class="toolbar-btn" id="btn-surname" data-i18n="toolbar_surname" onclick="setColorMode('surname')">By Surname</button>
+      <button class="toolbar-btn" id="btn-sex" data-i18n="toolbar_sex" onclick="setColorMode('sex')">By Sex</button>
+      <button class="toolbar-btn" id="btn-overlap" data-i18n="toolbar_overlap" onclick="setColorMode('overlap')" data-i18n-title="toolbar_overlap_title">Overlap</button>
+      <button class="toolbar-btn" id="btn-lang" data-i18n="lang_toggle_label" onclick="i18n.toggleLang()">EN</button>
+      <div class="toolbar-divider"></div>
+      <button class="toolbar-btn toolbar-toggle active" id="btn-time-arrow" data-i18n="toolbar_time_arrow" onclick="toggleTimeArrow()">Tijdpijl</button>
+    </div>
   </div>
 
   <div id="admin-badge">● Admin mode — <a href="admin" style="color:inherit">Open CRM</a></div>
