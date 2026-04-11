@@ -105,7 +105,7 @@ app.use('/genealogy-viz', vizRouter);
 // ── Root: gallery landing page ────────────────────────────────────────────────
 // Explicit route only — no root-level static() to prevent bypassing auth on /admin
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  res.sendFile(path.join(__dirname, '../public/app.html'));
 });
 
 // Export for testing; caller does app.listen()
