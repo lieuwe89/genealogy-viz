@@ -234,7 +234,17 @@ function buildNodeObject(node) {
     transparent: opacity < 1,
     opacity,
   });
-  return new THREE.Mesh(geo, mat);
+  const visibleMesh = new THREE.Mesh(geo, mat);
+
+  // Larger invisible sphere so the click target is easier to hit
+  const hitGeo = new THREE.SphereGeometry(8, 8, 6);
+  const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+  const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+
+  const group = new THREE.Group();
+  group.add(visibleMesh);
+  group.add(hitMesh);
+  return group;
 }
 
 function applyOverlapColors(focusId) {
