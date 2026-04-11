@@ -92,13 +92,8 @@ vizRouter.get('/admin*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/index.html'));
 });
 
-// Serve visualiser HTML at /genealogy-viz
-vizRouter.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/app.html'));
-});
-
-// Static assets (JS/CSS) reachable under /genealogy-viz prefix
-vizRouter.use(express.static(path.join(__dirname, '../public')));
+vizRouter.use(express.static(path.join(__dirname, "../public")));
+vizRouter.get("/", (req, res) => { res.sendFile(path.join(__dirname, "../public/app.html")); });// Serve visualiser HTML at /genealogy-viz
 
 app.use('/genealogy-viz', vizRouter);
 
