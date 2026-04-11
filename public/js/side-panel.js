@@ -47,7 +47,7 @@ function backToSingle() {
 }
 
 function renderPanel(data) {
-  const fullName = [data.name_prefix, data.given_name, data.surname, data.name_suffix]
+  const fullName = [data.given_name, data.name_prefix, data.surname, data.name_suffix]
     .filter(Boolean).join(' ');
   document.getElementById('panel-name').textContent = fullName || '(unknown)';
 
@@ -84,7 +84,7 @@ function renderPanel(data) {
     html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_connections')) + '</div>';
     html += data.relationships.map(r => {
       const otherId = r.person_a_id === data.id ? r.person_b_id : r.person_a_id;
-      const otherName = [r.name_prefix, r.given_name, r.surname].filter(Boolean).join(' ');
+      const otherName = [r.given_name, r.name_prefix, r.surname].filter(Boolean).join(' ');
       return `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)} <span style="color:#6e7681;font-size:11px">(${escHtml(r.type)})</span></a>` +
         `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-bottom:4px" onclick="openCompare('${escHtml(otherId)}')">${escHtml(i18n.t('timeline_button'))}</button>`;
     }).join('');
@@ -130,8 +130,8 @@ function renderTwoPersonMode() {
   panel.classList.add('open');
 
   // Header shows both names
-  const nameA = [currentData.name_prefix, currentData.given_name, currentData.surname].filter(Boolean).join(' ');
-  const nameB = [secondPersonData.name_prefix, secondPersonData.given_name, secondPersonData.surname].filter(Boolean).join(' ');
+  const nameA = [currentData.given_name, currentData.name_prefix, currentData.surname].filter(Boolean).join(' ');
+  const nameB = [secondPersonData.given_name, secondPersonData.name_prefix, secondPersonData.surname].filter(Boolean).join(' ');
   document.getElementById('panel-name').textContent = `${nameA} & ${nameB}`;
   document.getElementById('panel-role-header').innerHTML = '';
 

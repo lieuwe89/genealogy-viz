@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
 
   const nodes = persons.map(p => ({
     id: p.id,
-    name: [p.name_prefix, p.given_name, p.surname, p.name_suffix].filter(Boolean).join(' '),
+    name: [p.given_name, p.name_prefix, p.surname, p.name_suffix].filter(Boolean).join(' '),
     givenName: p.given_name,
     surname: p.surname,
     sex: p.sex,
