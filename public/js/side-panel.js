@@ -179,7 +179,7 @@ function renderTwoPersonMode() {
   pathNodes.forEach((node, i) => {
     const ls = lifespans[i];
     const isFocal = String(node.id) === String(currentPersonId) || String(node.id) === String(secondPersonId);
-    const shortName = [node.givenName, node.surname].filter(Boolean).join(' ') || node.name || '?';
+    const shortName = node.name || [node.givenName, node.surname].filter(Boolean).join(' ') || '?';
 
     html += '<div class="timeline-bar-row">';
     html += `<div class="timeline-bar-name" title="${escHtml(node.name || '')}">${escHtml(shortName)}</div>`;

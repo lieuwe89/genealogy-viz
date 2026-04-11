@@ -156,7 +156,7 @@
       }
 
       function nodeName(n) {
-        return [n.givenName, n.surname].filter(Boolean).join(' ') || n.name || '';
+        return n.name || [n.givenName, n.surname].filter(Boolean).join(' ') || '';
       }
 
       function showResults(matches) {
