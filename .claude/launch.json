@@ -4,9 +4,8 @@
     {
       "name": "genealogy-viz",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["start"],
-      "port": 3000,
-      "autoPort": false
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
     }
   ]
 }

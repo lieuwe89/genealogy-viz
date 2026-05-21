@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <base href="/genealogy-viz/">
+  <script>document.write('<base href="' + (location.pathname.includes('genealogy-viz') ? '/genealogy-viz/' : '/') + '">');</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — Genealogy Network</title>
   <link rel="stylesheet" href="css/app.css">
@@ -28,7 +28,7 @@
     <a href="#relationships" data-i18n="admin_relationships" onclick="showTab(event,'relationships',this)">Relationships</a>
     <a href="#import" data-i18n="admin_import" onclick="showTab(event,'import',this)">Import data</a>
     <a href="#" data-i18n="admin_export" onclick="event.preventDefault();doExport()">Export data</a>
-    <a href="/genealogy-viz/" data-i18n="admin_viz_link" style="margin-left:auto">← Visualisation</a>
+    <a href="../" data-i18n="admin_viz_link" style="margin-left:auto">← Visualisation</a>
     <a href="#" data-i18n="admin_change_password" onclick="event.preventDefault();showChangePasswordModal()">Change password</a>
     <a href="#" data-i18n="admin_logout" onclick="event.preventDefault();doLogout()" style="color:#f85149">Log out</a>
   </nav>

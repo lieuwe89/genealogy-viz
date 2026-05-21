@@ -95,13 +95,9 @@ vizRouter.get('/admin*', (req, res) => {
 vizRouter.use(express.static(path.join(__dirname, "../public")));
 vizRouter.get("/", (req, res) => { res.sendFile(path.join(__dirname, "../public/app.html")); });// Serve visualiser HTML at /genealogy-viz
 
+// Mount at both root (subdomain) and legacy prefix (back-compat for cached links).
 app.use('/genealogy-viz', vizRouter);
-
-// ── Root: gallery landing page ────────────────────────────────────────────────
-// Explicit route only — no root-level static() to prevent bypassing auth on /admin
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/app.html'));
-});
+app.use('/', vizRouter);
 
 // Export for testing; caller does app.listen()
 module.exports = app;

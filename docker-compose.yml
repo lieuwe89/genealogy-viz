@@ -1,0 +1,16 @@
+services:
+  app:
+    image: ghcr.io/lieuwe89/genealogy-viz:latest
+    container_name: genealogy-viz
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:3002:3000"
+    volumes:
+      - /srv/data/genealogy-viz:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

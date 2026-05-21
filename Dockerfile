@@ -1,44 +1,20 @@
-# syntax = docker/dockerfile:1
-
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=22.21.1
-FROM node:${NODE_VERSION}-slim AS base
-
-LABEL fly_launch_runtime="Node.js"
-
-# Node.js app lives here
+# syntax=docker/dockerfile:1.7
+FROM node:20.19.3-alpine AS base
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
-
-
-# Throw-away build stage to reduce size of final image
 FROM base AS build
-
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
-
-# Install node modules
-COPY package-lock.json package.json ./
+RUN apk add --no-cache python3 make g++ pkgconfig
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy application code
-COPY . .
-
-
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Setup sqlite3 on a separate volume
+FROM base AS runner
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV DB_PATH=/data/genealogy.db
 RUN mkdir -p /data
-VOLUME /data
-
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 8080
-ENV DB_PATH="/data/genealogy.db"
-CMD [ "npm", "run", "start" ]
+COPY --from=build /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
+COPY server ./server
+COPY public ./public
+EXPOSE 3000
+CMD ["node", "server/index.js"]
