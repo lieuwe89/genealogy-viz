@@ -137,4 +137,50 @@ function shortestPath(graphData, fromId, toId) {
   return [];
 }
 
-window.OverlapLogic = { estimateLifespan, overlapLevel, shortestPath };
+/**
+ * estimateBirthYears(graphData)
+ * For nodes without birthYear, guess one from relatives (display only, never stored):
+ * death − 60, parent + 28, child − 28, spouse ± 0. Averaged; repeated so guesses
+ * propagate along chains of unknowns. Returns Map id → year.
+ * ponytail: fixed generation gap of 28 years; fine for positioning, not for research.
+ */
+function estimateBirthYears(graphData) {
+  const GEN = 28;
+  const known = new Map();
+  graphData.nodes.forEach(n => { if (n.birthYear) known.set(String(n.id), n.birthYear); });
+  const rels = new Map(); // id → [{ id, offset }]
+  const add = (a, b, offset) => {
+    if (!rels.has(a)) rels.set(a, []);
+    rels.get(a).push({ id: b, offset });
+  };
+  for (const l of graphData.links) {
+    const s = linkEndId(l.source), t = linkEndId(l.target);
+    if (l.type === 'parent-child') { add(t, s, GEN); add(s, t, -GEN); }
+    else { add(s, t, 0); add(t, s, 0); }
+  }
+
+  const estimates = new Map();
+  graphData.nodes.forEach(n => {
+    if (!n.birthYear && n.deathYear) estimates.set(String(n.id), n.deathYear - 60);
+  });
+  for (let pass = 0; pass < 6; pass++) {
+    let changed = false;
+    for (const n of graphData.nodes) {
+      const id = String(n.id);
+      if (known.has(id) || (estimates.has(id) && n.deathYear)) continue;
+      const guesses = (rels.get(id) || [])
+        .map(r => {
+          const y = known.get(r.id) ?? estimates.get(r.id);
+          return y == null ? null : y + r.offset;
+        })
+        .filter(y => y != null);
+      if (!guesses.length) continue;
+      const y = Math.round(guesses.reduce((a, b) => a + b, 0) / guesses.length);
+      if (estimates.get(id) !== y) { estimates.set(id, y); changed = true; }
+    }
+    if (!changed) break;
+  }
+  return estimates;
+}
+
+window.OverlapLogic = { estimateLifespan, overlapLevel, shortestPath, estimateBirthYears };

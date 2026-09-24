@@ -254,6 +254,25 @@ body {
   cursor: pointer;
 }
 .connection-link:hover { text-decoration: underline; }
+.connection-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.connection-row .connection-link { display: inline; }
+.connection-meta { color: var(--text3); font-size: 11px; }
+.btn.connection-compare { font-size: 10px; padding: 1px 6px; margin-left: auto; }
+.path-chain-node[data-id] { cursor: pointer; }
+.path-chain-node[data-id]:hover { text-decoration: underline; }
+.search-years { color: var(--text3); font-size: 11px; margin-left: 6px; }
+
+#loading {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2); font-size: 14px;
+  pointer-events: none; z-index: 50;
+}
+#loading.hidden { display: none; }
+
+/* Show mouse or touch instructions depending on the device */
+@media (pointer: coarse) { .only-mouse { display: none; } }
+@media (pointer: fine) { .only-touch { display: none; } }
 .annotation-item {
   background: var(--bg);
   border: 1px solid var(--border2);
@@ -535,3 +554,7 @@ body {
 .timeline-bar-fill.estimated { background: repeating-linear-gradient(90deg, var(--accent) 0, var(--accent) 4px, transparent 4px, transparent 8px); border: 1px dashed var(--accent-h); }
 .timeline-bar-fill.focal { background: #facc15; }
 .timeline-estimated-label { font-size: 10px; color: #6366f1; margin-left: 4px; }
+.path-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 13px; color: var(--text2); }
+.path-chain-node { color: var(--text2); }
+.path-chain-node.focal { color: #facc15; font-weight: 600; }
+.path-chain-arrow { color: var(--text3); font-size: 11px; }

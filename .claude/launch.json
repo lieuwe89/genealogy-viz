@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "genealogy-viz",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "fnm",
+      "runtimeArgs": ["exec", "--using=20.19.3", "npm", "run", "dev"],
       "port": 3000
     }
   ]

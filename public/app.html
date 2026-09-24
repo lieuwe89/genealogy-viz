@@ -8,6 +8,7 @@
 </head>
 <body>
   <div id="graph-container"></div>
+  <div id="loading" data-i18n="loading">Netwerk laden…</div>
 
   <div id="toolbar">
     <button id="burger-btn" onclick="(function(){document.getElementById('toolbar-menu').classList.toggle('open')})()" aria-label="Menu">☰</button>
@@ -26,7 +27,7 @@
 
   <div id="search-bar">
     <div id="search-wrapper">
-      <input id="search-input" type="text" placeholder="Zoek persoon…" autocomplete="off" />
+      <input id="search-input" type="text" placeholder="Zoek persoon…" data-i18n-placeholder="search_placeholder" autocomplete="off" />
       <ul id="search-results" class="hidden"></ul>
     </div>
   </div>
@@ -45,9 +46,12 @@
         <div class="info-section">
           <h3 data-i18n="info_nav_heading">Navigeren</h3>
           <ul>
-            <li data-i18n="info_nav_rotate">Klik + slepen om te draaien</li>
-            <li data-i18n="info_nav_zoom">Scroll om in/uit te zoomen</li>
-            <li data-i18n="info_nav_pan">Rechtermuisknop of twee vingers om te verschuiven</li>
+            <li class="only-mouse" data-i18n="info_nav_rotate">Klik + slepen om te draaien</li>
+            <li class="only-mouse" data-i18n="info_nav_zoom">Scroll om in/uit te zoomen</li>
+            <li class="only-mouse" data-i18n="info_nav_pan">Rechtermuisknop om te verschuiven</li>
+            <li class="only-touch" data-i18n="info_nav_rotate_touch">Sleep met één vinger om te draaien</li>
+            <li class="only-touch" data-i18n="info_nav_zoom_touch">Knijp om in/uit te zoomen</li>
+            <li class="only-touch" data-i18n="info_nav_pan_touch">Sleep met twee vingers om te verschuiven</li>
           </ul>
         </div>
         <div class="info-section">
@@ -165,6 +169,12 @@
         matches.slice(0, 8).forEach(function(n) {
           const li = document.createElement('li');
           li.textContent = nodeName(n);
+          if (n.birthYear || n.deathYear) {
+            const years = document.createElement('span');
+            years.className = 'search-years';
+            years.textContent = (n.birthYear || '?') + '–' + (n.deathYear || '?');
+            li.appendChild(years);
+          }
           li.addEventListener('mousedown', function(e) {
             e.preventDefault();
             input.value = nodeName(n);

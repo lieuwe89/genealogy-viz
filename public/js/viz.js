@@ -1,9 +1,10 @@
 'use strict';
-/* global ForceGraph3D, ColorModes, OverlapLogic */
+/* global ForceGraph3D, ColorModes, OverlapLogic, escHtml, i18n */
 
 let graph, graphData, colorMode = 'role', surnamePalette = {};
 let overlapFocusId = null; // null = no overlap mode active
 let selectedNodeId = null; // tracks which node is selected for link highlighting
+let autoFit = true; // fit the whole network until the user or a fly-to takes over the camera
 
 function getLinkColor(link) {
   if (selectedNodeId) {
@@ -23,6 +24,14 @@ async function initViz() {
   window.graphData = graphData;
   surnamePalette = ColorModes.buildSurnamePalette(graphData.nodes);
 
+  // Missing birth years: place by relatives' years (display only) and mark the node
+  const estimates = OverlapLogic.estimateBirthYears(graphData);
+  graphData.nodes.forEach(n => {
+    const y = estimates.get(String(n.id));
+    if (y != null) n.zYear = y;
+    n.yearUnknown = !n.birthYear;
+  });
+
   const years = graphData.nodes.map(n => n.birthYear).filter(Boolean);
   const minYear = years.length ? Math.min(...years) : 1700;
   const maxYear = years.length ? Math.max(...years) : 1700;
@@ -30,18 +39,21 @@ async function initViz() {
   const Z_RANGE = Math.min(3000, Math.max(600, (maxYear - minYear) * 8));
 
   function nodeZ(node) {
-    const y = node.birthYear || medianYear;
+    const y = node.birthYear || node.zYear || medianYear;
     return ((y - minYear) / (maxYear - minYear || 1)) * Z_RANGE - Z_RANGE / 2;
   }
 
   const initBg = Theme.isLight() ? '#f6f8fa' : '#0d1117';
   graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('graph-container'))
     .backgroundColor(initBg)
+    .width(window.innerWidth)
+    .height(window.innerHeight)
+    .showNavInfo(false)
     .graphData(graphData)
     .nodeLabel(n => {
-      const birth = n.birthYear || '?';
+      const birth = n.birthYear || (n.zYear ? `${i18n.t('date_about')} ${n.zYear}?` : '?');
       const death = n.deathYear || '?';
-      return `<span style="font-weight:600">${n.name}</span><br><span style="font-size:0.85em;opacity:0.7">[${birth} – ${death}]</span>`;
+      return `<span style="font-weight:600">${escHtml(n.name)}</span><br><span style="font-size:0.85em;opacity:0.7">[${birth} – ${death}]</span>`;
     })
     .nodeThreeObject(buildNodeObject)
     .nodeThreeObjectExtend(false)
@@ -63,6 +75,31 @@ async function initViz() {
     });
 
   window.graph = graph; // expose for theme switcher
+
+  document.getElementById('loading').classList.add('hidden');
+
+  // Initial view: the whole network (fit once early, refit when the layout settles),
+  // or the person from the URL (#p=<id>). Any user interaction cancels the auto-fit.
+  const linked = location.hash.startsWith('#p=') ? decodeURIComponent(location.hash.slice(3)) : null;
+  const hasLinked = linked && graphData.nodes.some(n => n.id === linked);
+  let ticks = 0, userMoved = false, settled = false;
+  graph.controls().addEventListener('start', () => { autoFit = false; userMoved = true; });
+  graph.onEngineTick(() => {
+    if (++ticks !== 40) return;
+    if (hasLinked) {
+      openPanel(linked);
+      flyToNode(linked);
+    } else if (autoFit) {
+      graph.zoomToFit(0, 40);
+    }
+  });
+  graph.onEngineStop(() => {
+    if (settled || userMoved) return;
+    settled = true;
+    if (hasLinked) flyToNode(linked); // layout moved the person since tick 40
+    else if (autoFit) graph.zoomToFit(800, 40);
+    autoFit = false;
+  });
 
   // Keep canvas sized correctly when phone rotates or browser chrome resizes
   window.addEventListener('resize', () => {
@@ -152,6 +189,9 @@ async function initViz() {
   }
   arrowGroup.add(makeYearSprite(minYear, minZ + 15));
   arrowGroup.add(makeYearSprite(maxYear, maxZ - 15));
+  for (let y = Math.ceil((minYear + 30) / 100) * 100; y <= maxYear - 30; y += 100) {
+    arrowGroup.add(makeYearSprite(y, ((y - minYear) / (maxYear - minYear || 1)) * Z_RANGE - Z_RANGE / 2));
+  }
 
   // Flowing chevrons — drift from past → future, fade at ends
   const CHEVRON_COUNT = 14;
@@ -229,10 +269,12 @@ function buildNodeObject(node) {
 
   const geo = new THREE.SphereGeometry(3, 12, 8);
 
+  // Unknown birth year → wireframe, so the position on the time axis reads as a guess
   const mat = new THREE.MeshLambertMaterial({
     color,
     transparent: opacity < 1,
     opacity,
+    wireframe: node.yearUnknown && !overlapFocusId,
   });
   const visibleMesh = new THREE.Mesh(geo, mat);
 
@@ -279,9 +321,24 @@ function flyToNode(nodeId) {
   if (!graph || !graphData) return;
   const node = graphData.nodes.find(n => n.id === nodeId);
   if (!node) return;
-  const dist = 80;
+  autoFit = false;
   const { x = 0, y = 0, z = 0 } = node;
-  graph.cameraPosition({ x: x + dist, y: y + dist, z: z + dist }, node, 800);
+  const d = 200; // far enough to see the direct family around the person
+  const cam = new THREE.Vector3(x + d, y + d * 0.4, z + d);
+  const target = new THREE.Vector3(x, y, z);
+
+  // Side panel covers the right 360px on wide screens: shift the look-at point
+  // to the right so the person lands in the middle of the visible area.
+  if (window.innerWidth > 600) {
+    const forward = target.clone().sub(cam);
+    const right = forward.clone().cross(graph.camera().up).normalize();
+    const halfWidth = forward.length() * Math.tan(THREE.MathUtils.degToRad(graph.camera().fov / 2)) * graph.camera().aspect;
+    const shift = (180 / (window.innerWidth / 2)) * halfWidth;
+    right.multiplyScalar(shift);
+    cam.add(right);
+    target.add(right);
+  }
+  graph.cameraPosition(cam, target, 800);
 }
 
 window.setColorMode = setColorMode;

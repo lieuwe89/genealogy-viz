@@ -102,5 +102,42 @@ window.RelPath = (function () {
     }
   }
 
-  return { classifyRelationship: classifyRelationship, formatRelLabel: formatRelLabel };
+  /**
+   * formatGedDate(str, t)
+   * Turns GEDCOM date qualifiers into readable text: "ABT 1676" → "ca. 1676".
+   */
+  function formatGedDate(str, t) {
+    if (!str) return '';
+    return String(str).trim()
+      .replace(/^(?:BET|FROM) (.+) (?:AND|TO) (.+)$/i, '$1–$2')
+      .replace(/^(?:ABT|EST|CAL)\.? /i, t('date_about') + ' ')
+      .replace(/^BEF\.? /i, t('date_before') + ' ')
+      .replace(/^AFT\.? /i, t('date_after') + ' ');
+  }
+
+  /**
+   * relationKind(rel, selfId)
+   * rel: row from /api/persons/:id relationships (person_a = parent for parent-child).
+   * Returns 'parent' | 'child' | 'spouse' from the point of view of selfId.
+   */
+  function relationKind(rel, selfId) {
+    if (rel.type !== 'parent-child') return 'spouse';
+    return String(rel.person_a_id) === String(selfId) ? 'child' : 'parent';
+  }
+
+  /**
+   * relationLabel(kind, sex, t) → "vader", "dochter", "echtgenote", …
+   */
+  function relationLabel(kind, sex, t) {
+    var s = sex === 'M' ? 'm' : sex === 'F' ? 'f' : 'u';
+    return t('relation_' + kind + '_' + s);
+  }
+
+  return {
+    classifyRelationship: classifyRelationship,
+    formatRelLabel: formatRelLabel,
+    formatGedDate: formatGedDate,
+    relationKind: relationKind,
+    relationLabel: relationLabel,
+  };
 })();

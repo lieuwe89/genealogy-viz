@@ -15,6 +15,7 @@ async function openPanel(personId) {
   const res = await fetch(`api/persons/${encodeURIComponent(personId)}`);
   if (!res.ok) return;
   currentData = await res.json();
+  history.replaceState(null, '', '#p=' + encodeURIComponent(personId));
   renderPanel(currentData);
   document.getElementById('side-panel').classList.add('open');
   // Trigger overlap colours in 3D graph
@@ -28,6 +29,7 @@ function closePanel() {
   secondPersonId = null;
   secondPersonData = null;
   editMode = false;
+  history.replaceState(null, '', location.pathname + location.search);
   if (window.clearOverlapColors) window.clearOverlapColors();
 }
 
@@ -52,9 +54,7 @@ function renderPanel(data) {
   document.getElementById('panel-name').textContent = fullName || '(unknown)';
 
   const roleHeader = document.getElementById('panel-role-header');
-  roleHeader.innerHTML = data.roles.length
-    ? `<span class="role-badge">${escHtml(data.roles[0].label)}</span>`
-    : '';
+  roleHeader.innerHTML = data.roles.map(r => `<span class="role-badge">${escHtml(r.label)}</span>`).join('');
 
   const body = document.getElementById('panel-body');
 
@@ -70,26 +70,30 @@ function renderPanel(data) {
   html += '<div class="panel-section">' +
     '<div class="panel-label">' + escHtml(i18n.t('panel_vitals')) + '</div>' +
     '<div>' + (data.sex === 'M' ? escHtml(i18n.t('panel_sex_male')) : data.sex === 'F' ? escHtml(i18n.t('panel_sex_female')) : escHtml(i18n.t('panel_sex_unknown'))) + '</div>';
-  if (data.birth_date) html += `<div>b. ${escHtml(data.birth_date)}${data.birth_place ? ' · ' + escHtml(data.birth_place) : ''}</div>`;
-  if (data.death_date) html += `<div>d. ${escHtml(data.death_date)}${data.death_place ? ' · ' + escHtml(data.death_place) : ''}</div>`;
+  const date = d => escHtml(RelPath.formatGedDate(d, i18n.t));
+  if (data.birth_date) html += `<div>✱ ${date(data.birth_date)}${data.birth_place ? ' · ' + escHtml(data.birth_place) : ''}</div>`;
+  if (data.death_date) html += `<div>† ${date(data.death_date)}${data.death_place ? ' · ' + escHtml(data.death_place) : ''}</div>`;
   html += '</div>';
 
-  if (data.roles.length) {
-    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_roles')) + '</div>';
-    html += data.roles.map(r => `<span class="role-badge">${escHtml(r.label)}</span>`).join('');
-    html += '</div>';
-  }
-
-  if (data.relationships.length) {
-    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_connections')) + '</div>';
-    html += data.relationships.map(r => {
+  // Connections grouped as parents / partners / children, oldest first
+  const groups = { parent: [], spouse: [], child: [] };
+  data.relationships.forEach(r => groups[RelPath.relationKind(r, data.id)].push(r));
+  [['parent', 'panel_parents'], ['spouse', 'panel_partners'], ['child', 'panel_children']].forEach(([kind, heading]) => {
+    const rels = groups[kind].sort((a, b) => (a.birth_year || 9999) - (b.birth_year || 9999));
+    if (!rels.length) return;
+    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t(heading)) + '</div>';
+    html += rels.map(r => {
       const otherId = r.person_a_id === data.id ? r.person_b_id : r.person_a_id;
       const otherName = [r.given_name, r.name_prefix, r.surname].filter(Boolean).join(' ');
-      return `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)} <span style="color:#6e7681;font-size:11px">(${escHtml(r.type)})</span></a>` +
-        `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-bottom:4px" onclick="openCompare('${escHtml(otherId)}')">${escHtml(i18n.t('timeline_button'))}</button>`;
+      const years = r.birth_year || r.death_year ? ` ${r.birth_year || '?'}–${r.death_year || '?'}` : '';
+      return '<div class="connection-row">' +
+        `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)}</a>` +
+        `<span class="connection-meta">${escHtml(RelPath.relationLabel(kind, r.sex, i18n.t) + years)}</span>` +
+        `<button class="btn btn-secondary connection-compare" onclick="openCompare('${escHtml(otherId)}')">${escHtml(i18n.t('timeline_button'))}</button>` +
+        '</div>';
     }).join('');
     html += '</div>';
-  }
+  });
 
   if (data.notes) {
     html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_notes')) + '</div><div style="font-size:12px;color:#8b949e">' + escHtml(data.notes) + '</div></div>';
@@ -211,6 +215,21 @@ function renderTwoPersonMode() {
     html += '<p style="font-size:14px;color:#6e7681">' + escHtml(i18n.t('rel_error')) + '</p>';
   }
   html += '</div>';
+
+  // Path section — show all intermediate steps between the two focal persons
+  if (pathNodes.length > 2) {
+    html += '<div class="panel-section">';
+    html += '<div class="panel-label">' + escHtml(i18n.t('path_section_heading')) + '</div>';
+    html += '<div class="path-chain">';
+    pathNodes.forEach((node, i) => {
+      const isFocal = String(node.id) === String(currentPersonId) || String(node.id) === String(secondPersonId);
+      const displayName = node.name || [node.givenName, node.surname].filter(Boolean).join(' ') || '?';
+      html += '<a class="path-chain-node' + (isFocal ? ' focal' : '') + '" data-id="' + escHtml(node.id) + '">' + escHtml(displayName) + '</a>';
+      if (i < pathNodes.length - 1) html += '<span class="path-chain-arrow">\u2192</span>';
+    });
+    html += '</div>';
+    html += '</div>';
+  }
 
   // Back button
   html += '<div style="padding:12px 16px">' +
@@ -389,7 +408,7 @@ function isSafeUrl(url) {
 }
 
 document.getElementById('side-panel').addEventListener('click', e => {
-  const link = e.target.closest('.connection-link');
+  const link = e.target.closest('.connection-link, .path-chain-node');
   if (link) {
     const id = link.dataset.id;
     flyToNode(id);

@@ -17,7 +17,7 @@ router.get('/:id', (req, res) => {
   const roles = db.prepare('SELECT * FROM roles WHERE person_id = ?').all(req.params.id);
   const annotations = db.prepare('SELECT * FROM annotations WHERE person_id = ?').all(req.params.id);
   const rels = db.prepare(`
-    SELECT r.*, p.given_name, p.surname, p.name_prefix
+    SELECT r.*, p.given_name, p.surname, p.name_prefix, p.sex, p.birth_year, p.death_year
     FROM relationships r
     JOIN persons p ON (
       CASE WHEN r.person_a_id = ? THEN r.person_b_id ELSE r.person_a_id END = p.id
