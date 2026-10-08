@@ -292,6 +292,9 @@ body {
   margin-top: 6px;
   border: 1px solid var(--border);
 }
+.panel-portrait { margin: 0; }
+.panel-portrait .annotation-img { margin-top: 0; }
+.panel-portrait .annotation-img-caption { text-align: center; }
 .annotation-img-caption {
   font-size: 11px;
   color: var(--text3);

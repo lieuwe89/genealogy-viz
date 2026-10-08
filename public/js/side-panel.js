@@ -79,6 +79,17 @@ function renderPanel(data) {
 
   let html = '';
 
+  // Portrait: the first annotation with an image goes on top; without text of its own it leaves the annotation list.
+  const portrait = data.annotations.find(a => a.image_path);
+  const annotations = data.annotations.filter(a => a !== portrait || a.content);
+  if (portrait) {
+    html += '<figure class="panel-section panel-portrait">' +
+      `<img src="${escHtml(portrait.image_path)}" class="annotation-img" alt="${escHtml(portrait.image_caption || fullName)}">` +
+      '<figcaption class="annotation-img-caption">' + escHtml(portrait.image_caption || '') +
+      (portrait.url ? ` <a href="${isSafeUrl(portrait.url) ? escHtml(portrait.url) : '#'}" target="_blank" rel="noopener">${escHtml(portrait.url_label || portrait.url)}</a>` : '') +
+      '</figcaption></figure>';
+  }
+
   html += '<div class="panel-section">' +
     '<div class="panel-label">' + escHtml(i18n.t('panel_vitals')) + '</div>' +
     '<div>' + (data.sex === 'M' ? escHtml(i18n.t('panel_sex_male')) : data.sex === 'F' ? escHtml(i18n.t('panel_sex_female')) : escHtml(i18n.t('panel_sex_unknown'))) + '</div>';
@@ -122,20 +133,24 @@ function renderPanel(data) {
     html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_notes')) + '</div><div style="font-size:12px;color:#8b949e">' + escHtml(data.notes) + '</div></div>';
   }
 
-  html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_annotations')) + '</div>';
-  if (data.annotations.length === 0) {
-    html += '<div style="color:#6e7681;font-size:12px">' + escHtml(i18n.t('panel_no_annotations')) + '</div>';
-  } else {
-    html += data.annotations.map(a => `
-      <div class="annotation-item">
-        ${a.content ? `<div>${escHtml(a.content)}</div>` : ''}
-        ${a.url ? `<a href="${isSafeUrl(a.url) ? escHtml(a.url) : '#'}" target="_blank" rel="noopener">${escHtml(a.url_label || a.url)}</a>` : ''}
-        ${a.image_path ? `<img src="${escHtml(a.image_path)}" class="annotation-img" alt="${escHtml(a.image_caption || '')}">` : ''}
-        ${a.image_path && a.image_caption ? `<div class="annotation-img-caption">${escHtml(a.image_caption)}</div>` : ''}
-      </div>
-    `).join('');
+  if (annotations.length || !portrait) {
+    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_annotations')) + '</div>';
+    if (annotations.length === 0) {
+      html += '<div style="color:#6e7681;font-size:12px">' + escHtml(i18n.t('panel_no_annotations')) + '</div>';
+    } else {
+      html += annotations.map(a => {
+        const img = a.image_path && a !== portrait;
+        return `
+        <div class="annotation-item">
+          ${a.content ? `<div>${escHtml(a.content)}</div>` : ''}
+          ${a.url && a !== portrait ? `<a href="${isSafeUrl(a.url) ? escHtml(a.url) : '#'}" target="_blank" rel="noopener">${escHtml(a.url_label || a.url)}</a>` : ''}
+          ${img ? `<img src="${escHtml(a.image_path)}" class="annotation-img" alt="${escHtml(a.image_caption || '')}">` : ''}
+          ${img && a.image_caption ? `<div class="annotation-img-caption">${escHtml(a.image_caption)}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+    html += '</div>';
   }
-  html += '</div>';
 
   // Compare button — clicking it puts the graph in compare-selection mode
   html += '<div style="padding:0 16px 12px">' +
