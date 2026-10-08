@@ -26,10 +26,6 @@ async function runImport(db, text, format, genericMapping = null) {
     db.prepare('DELETE FROM roles').run();
     db.prepare('DELETE FROM relationships').run();
     db.prepare('DELETE FROM sources').run();
-    const del = db.prepare('DELETE FROM persons WHERE id = ?');
-    for (const { id } of db.prepare('SELECT id FROM persons').all()) {
-      if (!keep.has(String(id))) del.run(id);
-    }
   });
   wipe();
 
@@ -83,6 +79,29 @@ async function runImport(db, text, format, genericMapping = null) {
     }
   });
   doImport();
+
+  // Persons merged in Gramps hand their annotations to the person that stayed, before the merged-away ids are
+  // deleted. Once per merge: Gramps may later reuse a freed id for someone else. On the first import with this
+  // logic all merges present are taken as already handled (they were fixed by hand before).
+  const meta = db.prepare("SELECT value FROM dataset_meta WHERE key = 'merges_done'").get();
+  const done = new Set(meta ? JSON.parse(meta.value) : []);
+  const moveNotes = db.prepare(`UPDATE annotations SET person_id = ? WHERE person_id = ? AND NOT (COALESCE(url, '') <> ''
+    AND EXISTS (SELECT 1 FROM annotations b WHERE b.person_id = ? AND b.url = annotations.url))`);
+  const finish = db.transaction(() => {
+    for (const p of persons) {
+      for (const old of p.mergedFrom || []) {
+        const key = `${old}>${p.id}`;
+        if (!done.has(key) && meta) moveNotes.run(String(p.id), old, String(p.id));
+        done.add(key);
+      }
+    }
+    db.prepare("INSERT OR REPLACE INTO dataset_meta (key, value) VALUES ('merges_done', ?)").run(JSON.stringify([...done]));
+    const del = db.prepare('DELETE FROM persons WHERE id = ?');
+    for (const { id } of db.prepare('SELECT id FROM persons').all()) {
+      if (!keep.has(String(id))) del.run(id);
+    }
+  });
+  finish();
 
   db.prepare("INSERT OR REPLACE INTO dataset_meta (key, value) VALUES ('imported_at', datetime('now'))").run();
   db.prepare("INSERT OR REPLACE INTO dataset_meta (key, value) VALUES ('import_format', ?)").run(format);

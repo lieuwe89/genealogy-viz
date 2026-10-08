@@ -110,6 +110,9 @@ async function parseGrampsXml(text) {
       deathDate: death.text,
       deathPlace: death.place,
       notes: (p.note || []).map(n => getText(n)).join('\n'),
+      // Gramps ids of persons merged into this one (attribute set by the enrichment plugin)
+      mergedFrom: (p.attribute || []).filter(a => getAttr(a, 'type') === 'Verrijking-samengevoegd-persoon')
+        .map(a => getAttr(a, 'value').split(' ')[0]).filter(Boolean),
       roles,
       sourceIds: [],
     };

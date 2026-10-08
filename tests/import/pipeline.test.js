@@ -63,3 +63,22 @@ test('re-import keeps annotations of persons that are still in the dataset', asy
   expect(notes).toEqual(['kept']);
   expect(db.prepare('SELECT COUNT(*) AS n FROM persons').get().n).toBe(1);
 });
+
+test('annotations of a person merged in Gramps move to the person that stayed', async () => {
+  const { initDb } = require('../../server/db');
+  const { runImport } = require('../../server/import/index');
+  const person = (id, extra = '') => `<person handle="h${id}" id="${id}"><gender>F</gender><name type="Birth Name"><first>Clara</first><surname>Buttingha</surname></name>${extra}</person>`;
+  const xml = people => `<?xml version="1.0" encoding="UTF-8"?><database><people>${people}</people></database>`;
+  const db = initDb(':memory:');
+  await runImport(db, xml(person('I0142') + person('I0506')), 'gramps');
+  db.prepare("INSERT INTO annotations (person_id, content, url) VALUES ('I0506', 'portret', 'https://example.org/p')").run();
+  db.prepare("INSERT INTO annotations (person_id, content, url) VALUES ('I0506', 'notitie', '')").run();
+  await runImport(db, xml(person('I0142', '<attribute type="Verrijking-samengevoegd-persoon" value="I0506 Clara Nicolaasdr. van Buttingha"/>')), 'gramps');
+  expect(db.prepare('SELECT person_id, content FROM annotations ORDER BY content').all())
+    .toEqual([{ person_id: 'I0142', content: 'notitie' }, { person_id: 'I0142', content: 'portret' }]);
+  // a later person who gets the freed id I0506 does not lose annotations to the old merge
+  await runImport(db, xml(person('I0142', '<attribute type="Verrijking-samengevoegd-persoon" value="I0506 x"/>') + person('I0506')), 'gramps');
+  db.prepare("INSERT INTO annotations (person_id, content, url) VALUES ('I0506', 'nieuw', '')").run();
+  await runImport(db, xml(person('I0142', '<attribute type="Verrijking-samengevoegd-persoon" value="I0506 x"/>') + person('I0506')), 'gramps');
+  expect(db.prepare("SELECT person_id FROM annotations WHERE content = 'nieuw'").get().person_id).toBe('I0506');
+});
