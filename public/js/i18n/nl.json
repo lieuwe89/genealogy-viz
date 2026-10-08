@@ -95,6 +95,8 @@
   "date_after": "na",
   "panel_parents": "Ouders",
   "panel_partners": "Partners",
+  "panel_household": "Huishouden en dienst",
+  "panel_association_self": "zelf:",
   "panel_children": "Kinderen",
   "relation_parent_m": "vader",
   "relation_parent_f": "moeder",

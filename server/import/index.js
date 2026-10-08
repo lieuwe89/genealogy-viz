@@ -46,7 +46,7 @@ async function runImport(db, text, format, genericMapping = null) {
   `);
   const insertRole = db.prepare('INSERT INTO roles (person_id, label, kind, year_from, year_to) VALUES (?, ?, ?, ?, ?)');
   const insertRel = db.prepare(
-    'INSERT INTO relationships (person_a_id, person_b_id, type) VALUES (?, ?, ?)'
+    'INSERT INTO relationships (person_a_id, person_b_id, type, label) VALUES (?, ?, ?, ?)'
   );
   const insertSource = db.prepare(
     'INSERT OR IGNORE INTO sources (id, title, citation) VALUES (?, ?, ?)'
@@ -76,7 +76,7 @@ async function runImport(db, text, format, genericMapping = null) {
       }
     }
     for (const r of relationships) {
-      insertRel.run(r.personAId, r.personBId, r.type);
+      insertRel.run(r.personAId, r.personBId, r.type, r.label || '');
     }
     for (const s of sources) {
       if (s.id) insertSource.run(s.id, s.title || '', s.citation || '');

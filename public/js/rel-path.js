@@ -118,9 +118,10 @@ window.RelPath = (function () {
   /**
    * relationKind(rel, selfId)
    * rel: row from /api/persons/:id relationships (person_a = parent for parent-child).
-   * Returns 'parent' | 'child' | 'spouse' from the point of view of selfId.
+   * Returns 'parent' | 'child' | 'spouse' | 'association' from the point of view of selfId.
    */
   function relationKind(rel, selfId) {
+    if (rel.type === 'association') return 'association';
     if (rel.type !== 'parent-child') return 'spouse';
     return String(rel.person_a_id) === String(selfId) ? 'child' : 'parent';
   }

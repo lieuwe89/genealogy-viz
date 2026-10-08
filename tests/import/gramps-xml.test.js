@@ -100,3 +100,23 @@ test('reads Occupation events with years, Role categories, baptism/burial fallba
   expect(p.roles).toContainEqual({ label: 'WIC-bewindhebber', kind: 'category' });
   expect(p.roles.map(r => r.label)).not.toContain('Governor WIC');
 });
+
+test('reads Gramps associations (personref) as labelled association links, stored by runImport', async () => {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<database>
+  <people>
+    <person handle="h1" id="I0057"><gender>M</gender><name type="Birth Name"><first>Cornelis</first><surname>Star Lichtenvoort</surname></name></person>
+    <person handle="h2" id="I1600"><gender>M</gender><name type="Birth Name"><first>Louis</first><surname>Alons</surname></name>
+      <personref hlink="h1" rel="tot slaaf gemaakte bediende in het huishouden van"/>
+    </person>
+  </people>
+</database>`;
+  const { relationships } = await parseGrampsXml(xml);
+  expect(relationships).toEqual([{ personAId: 'I1600', personBId: 'I0057', type: 'association', label: 'tot slaaf gemaakte bediende in het huishouden van' }]);
+
+  const { initDb } = require('../../server/db');
+  const { runImport } = require('../../server/import/index');
+  const db = initDb(':memory:');
+  await runImport(db, xml, 'gramps');
+  expect(db.prepare('SELECT type, label FROM relationships').get()).toEqual({ type: 'association', label: 'tot slaaf gemaakte bediende in het huishouden van' });
+});

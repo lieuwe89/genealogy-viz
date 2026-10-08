@@ -72,6 +72,8 @@ function initDb(path) {
   try { db.exec(`ALTER TABLE roles ADD COLUMN kind TEXT DEFAULT 'role'`); } catch (_) {}
   try { db.exec(`ALTER TABLE roles ADD COLUMN year_from INTEGER`); } catch (_) {}
   try { db.exec(`ALTER TABLE roles ADD COLUMN year_to INTEGER`); } catch (_) {}
+  // Associations (household, service, enslavement) carry a free-text description
+  try { db.exec(`ALTER TABLE relationships ADD COLUMN label TEXT DEFAULT ''`); } catch (_) {}
 
   return db;
 }

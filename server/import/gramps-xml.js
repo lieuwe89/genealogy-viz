@@ -134,6 +134,15 @@ async function parseGrampsXml(text) {
     }
   }
 
+  // Gramps associations (personref): para-family ties such as a servant in a household.
+  // The person holding the ref is person A; rel describes A's tie to B.
+  for (const p of (db.people?.[0]?.person || [])) {
+    for (const ref of (p.personref || [])) {
+      const otherId = handleToId[getAttr(ref, 'hlink')];
+      if (otherId) relationships.push({ personAId: p.$.id, personBId: otherId, type: 'association', label: getAttr(ref, 'rel') || '' });
+    }
+  }
+
   return { persons, relationships, sources: [] };
 }
 

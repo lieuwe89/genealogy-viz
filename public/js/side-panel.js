@@ -48,6 +48,14 @@ function backToSingle() {
   renderPanel(currentData);
 }
 
+// Gramps association: the label says what person B is to person A (e.g. Cornelis → Louis: "tot slaaf
+// gemaakte bediende in zijn huishouden"). On A's panel the label describes the listed person; on B's panel
+// it describes this person ("zelf: …").
+function associationText(rel, self) {
+  const label = rel.label || '–';
+  return rel.person_a_id === self.id ? label : `${i18n.t('panel_association_self')} ${label}`;
+}
+
 function renderPanel(data) {
   const fullName = [data.given_name, data.name_prefix, data.surname, data.name_suffix]
     .filter(Boolean).join(' ');
@@ -91,9 +99,9 @@ function renderPanel(data) {
   }
 
   // Connections grouped as parents / partners / children, oldest first
-  const groups = { parent: [], spouse: [], child: [] };
+  const groups = { parent: [], spouse: [], child: [], association: [] };
   data.relationships.forEach(r => groups[RelPath.relationKind(r, data.id)].push(r));
-  [['parent', 'panel_parents'], ['spouse', 'panel_partners'], ['child', 'panel_children']].forEach(([kind, heading]) => {
+  [['parent', 'panel_parents'], ['spouse', 'panel_partners'], ['child', 'panel_children'], ['association', 'panel_household']].forEach(([kind, heading]) => {
     const rels = groups[kind].sort((a, b) => (a.birth_year || 9999) - (b.birth_year || 9999));
     if (!rels.length) return;
     html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t(heading)) + '</div>';
@@ -103,7 +111,7 @@ function renderPanel(data) {
       const years = r.birth_year || r.death_year ? ` ${r.birth_year || '?'}–${r.death_year || '?'}` : '';
       return '<div class="connection-row">' +
         `<a class="connection-link" data-id="${escHtml(otherId)}">${escHtml(otherName)}</a>` +
-        `<span class="connection-meta">${escHtml(RelPath.relationLabel(kind, r.sex, i18n.t) + years)}</span>` +
+        `<span class="connection-meta">${escHtml((kind === 'association' ? associationText(r, data) : RelPath.relationLabel(kind, r.sex, i18n.t)) + years)}</span>` +
         `<button class="btn btn-secondary connection-compare" onclick="openCompare('${escHtml(otherId)}')">${escHtml(i18n.t('timeline_button'))}</button>` +
         '</div>';
     }).join('');

@@ -6,16 +6,21 @@ let overlapFocusId = null; // null = no overlap mode active
 let selectedNodeId = null; // tracks which node is selected for link highlighting
 let autoFit = true; // fit the whole network until the user or a fly-to takes over the camera
 
+// Associations (household, service, enslavement) get the enslaved-category hue so they stand apart from kinship.
+const LINK_COLORS = {
+  spouse:      { on: '#f59e0b', off: '#252d3a', base: '#6e7681' },
+  association: { on: '#e87ba4', off: '#2a1f26', base: '#9d5f7a' },
+  kin:         { on: '#facc15', off: '#1a2233', base: '#374151' },
+};
+
 function getLinkColor(link) {
+  const c = LINK_COLORS[link.type] || LINK_COLORS.kin;
   if (selectedNodeId) {
     const src = typeof link.source === 'object' ? link.source.id : link.source;
     const tgt = typeof link.target === 'object' ? link.target.id : link.target;
-    if (src === selectedNodeId || tgt === selectedNodeId) {
-      return link.type === 'spouse' ? '#f59e0b' : '#facc15'; // bright yellow — connected
-    }
-    return link.type === 'spouse' ? '#252d3a' : '#1a2233'; // very dim — not connected
+    return src === selectedNodeId || tgt === selectedNodeId ? c.on : c.off; // bright when connected, dim otherwise
   }
-  return link.type === 'spouse' ? '#6e7681' : '#374151'; // default
+  return c.base;
 }
 
 async function initViz() {
@@ -58,7 +63,7 @@ async function initViz() {
     .nodeThreeObject(buildNodeObject)
     .nodeThreeObjectExtend(false)
     .linkColor(getLinkColor)
-    .linkWidth(l => l.type === 'spouse' ? 1.5 : 0.8)
+    .linkWidth(l => l.type === 'spouse' ? 1.5 : l.type === 'association' ? 1.2 : 0.8)
     .linkOpacity(0.4)
     .onNodeClick(function(node) {
       if (window.isSelectingCompare) {

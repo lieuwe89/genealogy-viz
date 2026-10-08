@@ -156,7 +156,7 @@ function estimateBirthYears(graphData) {
   for (const l of graphData.links) {
     const s = linkEndId(l.source), t = linkEndId(l.target);
     if (l.type === 'parent-child') { add(t, s, GEN); add(s, t, -GEN); }
-    else { add(s, t, 0); add(t, s, 0); }
+    else if (l.type === 'spouse') { add(s, t, 0); add(t, s, 0); } // associations say nothing about age
   }
 
   const estimates = new Map();

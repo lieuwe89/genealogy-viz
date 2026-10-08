@@ -95,6 +95,8 @@
   "date_after": "after",
   "panel_parents": "Parents",
   "panel_partners": "Partners",
+  "panel_household": "Household and service",
+  "panel_association_self": "self:",
   "panel_children": "Children",
   "relation_parent_m": "father",
   "relation_parent_f": "mother",
