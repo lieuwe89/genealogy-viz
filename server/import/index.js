@@ -19,12 +19,17 @@ async function runImport(db, text, format, genericMapping = null) {
 
   const { persons, relationships, sources } = normalise(raw);
 
+  // Persons are upserted, not wiped: annotations made in the CRM hang on person ids (Gramps ids are
+  // stable) and would otherwise be lost through ON DELETE CASCADE. Only persons that left the dataset go.
+  const keep = new Set(persons.map(p => String(p.id)));
   const wipe = db.transaction(() => {
-    db.prepare('DELETE FROM annotations').run();
     db.prepare('DELETE FROM roles').run();
     db.prepare('DELETE FROM relationships').run();
     db.prepare('DELETE FROM sources').run();
-    db.prepare('DELETE FROM persons').run();
+    const del = db.prepare('DELETE FROM persons WHERE id = ?');
+    for (const { id } of db.prepare('SELECT id FROM persons').all()) {
+      if (!keep.has(String(id))) del.run(id);
+    }
   });
   wipe();
 
@@ -33,8 +38,13 @@ async function runImport(db, text, format, genericMapping = null) {
       birth_year, birth_date, birth_place, death_year, death_date, death_place, notes)
     VALUES (@id, @given_name, @surname, @name_prefix, @name_suffix, @sex,
       @birth_year, @birth_date, @birth_place, @death_year, @death_date, @death_place, @notes)
+    ON CONFLICT(id) DO UPDATE SET given_name = excluded.given_name, surname = excluded.surname,
+      name_prefix = excluded.name_prefix, name_suffix = excluded.name_suffix, sex = excluded.sex,
+      birth_year = excluded.birth_year, birth_date = excluded.birth_date, birth_place = excluded.birth_place,
+      death_year = excluded.death_year, death_date = excluded.death_date, death_place = excluded.death_place,
+      notes = excluded.notes, updated_at = datetime('now')
   `);
-  const insertRole = db.prepare('INSERT INTO roles (person_id, label) VALUES (?, ?)');
+  const insertRole = db.prepare('INSERT INTO roles (person_id, label, kind, year_from, year_to) VALUES (?, ?, ?, ?, ?)');
   const insertRel = db.prepare(
     'INSERT INTO relationships (person_a_id, person_b_id, type) VALUES (?, ?, ?)'
   );
@@ -60,7 +70,9 @@ async function runImport(db, text, format, genericMapping = null) {
         notes: p.notes || '',
       });
       for (const role of (p.roles || [])) {
-        insertRole.run(p.id, role);
+        // GEDCOM/generic parsers give plain strings, the Gramps parser { label, kind, yearFrom, yearTo }
+        const r = typeof role === 'string' ? { label: role, kind: 'role' } : role;
+        insertRole.run(p.id, r.label, r.kind || 'role', r.yearFrom || null, r.yearTo || null);
       }
     }
     for (const r of relationships) {

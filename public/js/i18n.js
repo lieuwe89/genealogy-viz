@@ -34,6 +34,7 @@ window.i18n = (function () {
   }
 
   function applyToDOM() {
+    if (typeof window.renderRoleLegend === 'function') window.renderRoleLegend();
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
       el.textContent = t(el.dataset.i18n);
     });

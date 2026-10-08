@@ -53,8 +53,12 @@ function renderPanel(data) {
     .filter(Boolean).join(' ');
   document.getElementById('panel-name').textContent = fullName || '(unknown)';
 
+  // Header: involvement categories (Gramps Role attribute); older datasets only have plain roles.
   const roleHeader = document.getElementById('panel-role-header');
-  roleHeader.innerHTML = data.roles.map(r => `<span class="role-badge">${escHtml(r.label)}</span>`).join('');
+  const categories = data.roles.filter(r => r.kind === 'category');
+  const functions = data.roles.filter(r => r.kind !== 'category');
+  roleHeader.innerHTML = (categories.length ? categories : functions)
+    .map(r => `<span class="role-badge">${escHtml(r.label)}</span>`).join('');
 
   const body = document.getElementById('panel-body');
 
@@ -74,6 +78,17 @@ function renderPanel(data) {
   if (data.birth_date) html += `<div>✱ ${date(data.birth_date)}${data.birth_place ? ' · ' + escHtml(data.birth_place) : ''}</div>`;
   if (data.death_date) html += `<div>† ${date(data.death_date)}${data.death_place ? ' · ' + escHtml(data.death_place) : ''}</div>`;
   html += '</div>';
+
+  // Dated functions (colonial roles), oldest first
+  if (categories.length && functions.length) {
+    const span = r => r.year_from && r.year_to && r.year_to !== r.year_from ? `${r.year_from}–${r.year_to}`
+      : r.year_from ? `${r.year_from}${r.year_to ? '' : '–'}` : '';
+    html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t('panel_roles')) + '</div>' +
+      functions.slice().sort((a, b) => (a.year_from || 9999) - (b.year_from || 9999))
+        .map(r => `<div class="connection-row"><span>${escHtml(r.label)}</span>` +
+          `<span class="connection-meta">${escHtml(span(r))}</span></div>`).join('') +
+      '</div>';
+  }
 
   // Connections grouped as parents / partners / children, oldest first
   const groups = { parent: [], spouse: [], child: [] };

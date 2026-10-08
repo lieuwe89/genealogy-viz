@@ -23,6 +23,7 @@ const Theme = (() => {
     if (window.graph && typeof window.graph.backgroundColor === 'function') {
       window.graph.backgroundColor(light ? LIGHT_BG : DARK_BG);
     }
+    if (typeof window.refreshNodeColors === 'function') window.refreshNodeColors();
     localStorage.setItem(STORAGE_KEY, light ? 'light' : 'dark');
   }
 

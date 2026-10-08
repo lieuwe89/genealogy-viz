@@ -104,5 +104,14 @@
   "relation_child_u": "child",
   "relation_spouse_m": "husband",
   "relation_spouse_f": "wife",
-  "relation_spouse_u": "spouse"
+  "relation_spouse_u": "spouse",
+  "legend_bestuur": "Governance (director, governor)",
+  "legend_slavenhandel": "Slave trade and plantations",
+  "legend_aandeelhouder": "WIC/VOC shareholder",
+  "legend_dienst": "In colonial service",
+  "legend_tot_slaaf_gemaakt": "Enslaved or freed",
+  "legend_abolitionist": "Abolitionist",
+  "legend_andere_rol": "Other role",
+  "legend_geen_rol": "No known role",
+  "panel_categories": "Involvement"
 }

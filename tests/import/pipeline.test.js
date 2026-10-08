@@ -51,3 +51,15 @@ test('runImport is idempotent (re-import replaces data)', async () => {
   const persons = db.prepare('SELECT * FROM persons').all();
   expect(persons).toHaveLength(2);
 });
+
+test('re-import keeps annotations of persons that are still in the dataset', async () => {
+  const db = initDb(':memory:');
+  await runImport(db, GEDCOM, 'gedcom');
+  db.prepare("INSERT INTO annotations (person_id, content) VALUES ('@I0001@', 'kept')").run();
+  db.prepare("INSERT INTO annotations (person_id, content) VALUES ('@I0002@', 'gone')").run();
+  const withoutTrip = GEDCOM.split('0 @I0002@')[0] + '0 TRLR';
+  await runImport(db, withoutTrip, 'gedcom');
+  const notes = db.prepare('SELECT content FROM annotations').all().map(a => a.content);
+  expect(notes).toEqual(['kept']);
+  expect(db.prepare('SELECT COUNT(*) AS n FROM persons').get().n).toBe(1);
+});

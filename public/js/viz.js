@@ -75,6 +75,7 @@ async function initViz() {
     });
 
   window.graph = graph; // expose for theme switcher
+  renderRoleLegend();
 
   document.getElementById('loading').classList.add('hidden');
 
@@ -307,8 +308,32 @@ function clearOverlapColors() {
   }
 }
 
+function renderRoleLegend() {
+  const el = document.getElementById('role-legend');
+  if (!el) return;
+  if (colorMode !== 'role') { el.classList.add('hidden'); return; }
+  const light = ColorModes.isLight();
+  const nodes = (graphData && graphData.nodes) || [];
+  const used = new Set(nodes.map(n => (ColorModes.roleGroup(n) || {}).key));
+  const rows = ColorModes.ROLE_GROUPS.filter(g => used.has(g.key))
+    .map(g => [light ? g.light : g.dark, i18n.t('legend_' + g.key)]);
+  if (nodes.some(n => !ColorModes.roleGroup(n) && n.roles && n.roles.length)) rows.push([ColorModes.ROLE_COLORS.withRole, i18n.t('legend_andere_rol')]);
+  rows.push([ColorModes.ROLE_COLORS.noRole, i18n.t('legend_geen_rol')]);
+  el.innerHTML = rows.map(([c, label]) => `<div><span class="swatch" style="background:${c}"></span>${label}</div>`).join('');
+  el.classList.remove('hidden');
+}
+
+window.renderRoleLegend = renderRoleLegend;
+
+// Theme switch: node colours differ per theme in role mode
+window.refreshNodeColors = function () {
+  if (graph) graph.nodeThreeObject(buildNodeObject);
+  renderRoleLegend();
+};
+
 function setColorMode(mode) {
   colorMode = mode;
+  renderRoleLegend();
   document.querySelectorAll('.toolbar-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById(`btn-${mode}`);
   if (btn) btn.classList.add('active');

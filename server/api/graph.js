@@ -9,10 +9,10 @@ router.get('/', (req, res) => {
   const roles = db.prepare('SELECT * FROM roles').all();
   const relationships = db.prepare('SELECT * FROM relationships').all();
 
-  const rolesByPerson = {};
+  const rolesByPerson = {}, categoriesByPerson = {};
   for (const r of roles) {
-    if (!rolesByPerson[r.person_id]) rolesByPerson[r.person_id] = [];
-    rolesByPerson[r.person_id].push(r.label);
+    const into = r.kind === 'category' ? categoriesByPerson : rolesByPerson;
+    (into[r.person_id] = into[r.person_id] || []).push(r.label);
   }
 
   const nodes = persons.map(p => ({
@@ -24,6 +24,7 @@ router.get('/', (req, res) => {
     birthYear: p.birth_year,
     deathYear: p.death_year,
     roles: rolesByPerson[p.id] || [],
+    categories: categoriesByPerson[p.id] || [],
   }));
 
   const links = relationships.map(r => ({

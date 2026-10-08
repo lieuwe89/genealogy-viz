@@ -57,11 +57,46 @@ test('parses persons from GRAMPS XML', async () => {
   expect(p.surname).toBe('Wichers');
   expect(p.sex).toBe('M');
   expect(p.birthYear).toBe(1719);
-  expect(p.roles).toContain('Governor of Surinam');
+  expect(p.roles).toContainEqual({ label: 'Governor of Surinam', kind: 'category' });
 });
 
 test('parses families into relationships', async () => {
   const raw = await parseGrampsXml(SAMPLE_XML);
   const spouse = raw.relationships.filter(r => r.type === 'spouse');
   expect(spouse.length).toBeGreaterThan(0);
+});
+
+const ENRICHED_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<database>
+  <people>
+    <person handle="h010" id="I0010">
+      <gender>M</gender>
+      <name type="Birth Name"><first>Pieter Rembt</first><surname prefix="van">Iddekinge</surname></name>
+      <eventref hlink="e010" role="Primary"/>
+      <eventref hlink="e011" role="Primary"/>
+      <eventref hlink="e012" role="Primary"/>
+      <eventref hlink="e013" role="Primary"/>
+      <attribute type="Role" value="WIC-bewindhebber"/>
+      <attribute type="Rol (oud)" value="Governor WIC"/>
+    </person>
+  </people>
+  <events>
+    <event handle="e010" id="E0010"><type>Baptism</type><dateval val="1683-03-04"/></event>
+    <event handle="e011" id="E0011"><type>Occupation</type><datespan start="1746" stop="1758"/><description>Bewindhebber WIC kamer Stad en Lande</description></event>
+    <event handle="e012" id="E0012"><type>Occupation</type><dateval val="1717" type="from"/><description>Hoofdparticipant WIC</description></event>
+    <event handle="e013" id="E0013"><type>Burial</type><dateval val="1758-05-01"/></event>
+  </events>
+</database>`;
+
+test('reads Occupation events with years, Role categories, baptism/burial fallback and surname prefix', async () => {
+  const [p] = (await parseGrampsXml(ENRICHED_XML)).persons;
+  expect(p.namePrefix).toBe('van');
+  expect(p.surname).toBe('Iddekinge');
+  expect(p.birthYear).toBe(1683);
+  expect(p.birthDate).toBe('≈ 1683-03-04');
+  expect(p.deathDate).toBe('□ 1758-05-01');
+  expect(p.roles).toContainEqual({ label: 'Bewindhebber WIC kamer Stad en Lande', kind: 'role', yearFrom: 1746, yearTo: 1758 });
+  expect(p.roles).toContainEqual({ label: 'Hoofdparticipant WIC', kind: 'role', yearFrom: 1717, yearTo: null });
+  expect(p.roles).toContainEqual({ label: 'WIC-bewindhebber', kind: 'category' });
+  expect(p.roles.map(r => r.label)).not.toContain('Governor WIC');
 });

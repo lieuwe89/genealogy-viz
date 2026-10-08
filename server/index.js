@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const { initDb } = require('./db');
 const { mountAuth, requireAdmin, ensureAdminExists } = require('./auth');
+const zlib = require('zlib');
 const { detectFormat, runImport } = require('./import/index');
 const graphRouter = require('./api/graph');
 const personsRouter = require('./api/persons');
@@ -64,7 +65,9 @@ vizRouter.post('/admin/import', requireAdmin, upload.single('file'), async (req,
     }
   }
   try {
-    const text = req.file.buffer.toString('utf-8');
+    // .gramps exports are gzip-compressed by default
+    const buf = req.file.buffer[0] === 0x1f && req.file.buffer[1] === 0x8b ? zlib.gunzipSync(req.file.buffer) : req.file.buffer;
+    const text = buf.toString('utf-8');
     await runImport(db, text, format, mapping);
     res.json({ ok: true, format, personsImported: db.prepare('SELECT COUNT(*) as n FROM persons').get().n });
   } catch (err) {

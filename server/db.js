@@ -68,6 +68,10 @@ function initDb(path) {
   // Migrations: add image columns to annotations if not present
   try { db.exec(`ALTER TABLE annotations ADD COLUMN image_path TEXT DEFAULT ''`); } catch (_) {}
   try { db.exec(`ALTER TABLE annotations ADD COLUMN image_caption TEXT DEFAULT ''`); } catch (_) {}
+  // Roles: 'category' (e.g. WIC-bewindhebber, for colouring) or 'role' (a dated function)
+  try { db.exec(`ALTER TABLE roles ADD COLUMN kind TEXT DEFAULT 'role'`); } catch (_) {}
+  try { db.exec(`ALTER TABLE roles ADD COLUMN year_from INTEGER`); } catch (_) {}
+  try { db.exec(`ALTER TABLE roles ADD COLUMN year_to INTEGER`); } catch (_) {}
 
   return db;
 }

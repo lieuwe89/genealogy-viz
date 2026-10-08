@@ -104,5 +104,14 @@
   "relation_child_u": "kind",
   "relation_spouse_m": "echtgenoot",
   "relation_spouse_f": "echtgenote",
-  "relation_spouse_u": "partner"
+  "relation_spouse_u": "partner",
+  "legend_bestuur": "Bestuur (bewindhebber, gouverneur)",
+  "legend_slavenhandel": "Slavenhandel en plantages",
+  "legend_aandeelhouder": "Aandeelhouder WIC/VOC",
+  "legend_dienst": "In koloniale dienst",
+  "legend_tot_slaaf_gemaakt": "Tot slaaf gemaakt of vrijgemaakt",
+  "legend_abolitionist": "Abolitionist",
+  "legend_andere_rol": "Andere rol",
+  "legend_geen_rol": "Geen rol bekend",
+  "panel_categories": "Betrokkenheid"
 }
