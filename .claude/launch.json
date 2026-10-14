@@ -4,7 +4,27 @@
     {
       "name": "genealogy-viz",
       "runtimeExecutable": "fnm",
-      "runtimeArgs": ["exec", "--using=20.19.3", "npm", "run", "dev"],
+      "runtimeArgs": [
+        "exec",
+        "--using=20.19.3",
+        "npm",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "genealogy-viz-showcase",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DB_PATH=./data/showcase.db",
+        "fnm",
+        "exec",
+        "--using=20.19.3",
+        "npm",
+        "run",
+        "dev"
+      ],
       "port": 3000
     }
   ]

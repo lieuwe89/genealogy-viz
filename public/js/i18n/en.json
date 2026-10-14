@@ -73,7 +73,7 @@
   "info_explore_click": "Click a node to open the detail panel with vitals, roles, connections and annotations.",
   "info_explore_compare": "Click 'Compare with another person' in the panel, then click a second person to see their relationship and shared timeline.",
   "info_colors_heading": "Colour modes (toolbar top-left)",
-  "info_colors_role": "By Role — colour by historical function or title",
+  "info_colors_role": "By Role — colour by category or function",
   "info_colors_surname": "By Surname — colour per family name",
   "info_colors_sex": "By Sex — colour by male/female/unknown",
   "info_colors_overlap": "Overlap — highlights periods of simultaneous lifespans",
@@ -95,7 +95,6 @@
   "date_after": "after",
   "panel_parents": "Parents",
   "panel_partners": "Partners",
-  "panel_household": "Household and service",
   "panel_association_self": "self:",
   "panel_children": "Children",
   "relation_parent_m": "father",
@@ -107,13 +106,7 @@
   "relation_spouse_m": "husband",
   "relation_spouse_f": "wife",
   "relation_spouse_u": "spouse",
-  "legend_bestuur": "Governance (director, governor)",
-  "legend_slavenhandel": "Slave trade and plantations",
-  "legend_aandeelhouder": "WIC/VOC shareholder",
-  "legend_dienst": "In colonial service",
-  "legend_tot_slaaf_gemaakt": "Enslaved or freed",
-  "legend_abolitionist": "Abolitionist",
   "legend_andere_rol": "Other role",
   "legend_geen_rol": "No known role",
-  "panel_categories": "Involvement"
+  "panel_associations": "Other relations"
 }

@@ -7,7 +7,7 @@ A self-hosted 3D web app for exploring family trees as interactive networks. Nod
 ## Features
 
 - **3D force-graph** — X/Y = family proximity, Z = birth year, giving every generation its own depth layer
-- **Three colour modes** — colour nodes by role (e.g. royalty vs commoner), surname family, or biological sex
+- **Three colour modes** — colour nodes by role category (taken from the data), surname family, or biological sex
 - **Side panel** — click any node for a full info card: vitals, roles, relationships, and freeform annotations with optional links
 - **Import pipeline** — accepts GEDCOM 5.5 (exported from most genealogy apps), GRAMPS XML (native Gramps export), and generic XML with a custom field mapping
 - **Admin CRM** — add, edit, and delete persons and relationships directly in the browser

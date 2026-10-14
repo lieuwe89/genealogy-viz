@@ -1,12 +1,12 @@
 'use strict';
 /* global ForceGraph3D, ColorModes, OverlapLogic, escHtml, i18n */
 
-let graph, graphData, colorMode = 'role', surnamePalette = {};
+let graph, graphData, colorMode = 'role', surnamePalette = {}, categoryPalette = {};
 let overlapFocusId = null; // null = no overlap mode active
 let selectedNodeId = null; // tracks which node is selected for link highlighting
 let autoFit = true; // fit the whole network until the user or a fly-to takes over the camera
 
-// Associations (household, service, enslavement) get the enslaved-category hue so they stand apart from kinship.
+// Associations (non-kin ties such as godparent, witness, household) get their own hue so they stand apart from kinship.
 const LINK_COLORS = {
   spouse:      { on: '#f59e0b', off: '#252d3a', base: '#6e7681' },
   association: { on: '#e87ba4', off: '#2a1f26', base: '#9d5f7a' },
@@ -28,6 +28,7 @@ async function initViz() {
   graphData = await res.json();
   window.graphData = graphData;
   surnamePalette = ColorModes.buildSurnamePalette(graphData.nodes);
+  categoryPalette = ColorModes.buildCategoryPalette(graphData.nodes);
 
   // Missing birth years: place by relatives' years (display only) and mark the node
   const estimates = OverlapLogic.estimateBirthYears(graphData);
@@ -270,7 +271,7 @@ function buildNodeObject(node) {
       if (!color) color = '#6366f1'; // fallback
     }
   } else {
-    color = ColorModes.getNodeColor(node, colorMode, surnamePalette);
+    color = ColorModes.getNodeColor(node, colorMode, surnamePalette, categoryPalette);
   }
 
   const geo = new THREE.SphereGeometry(3, 12, 8);
@@ -317,12 +318,9 @@ function renderRoleLegend() {
   const el = document.getElementById('role-legend');
   if (!el) return;
   if (colorMode !== 'role') { el.classList.add('hidden'); return; }
-  const light = ColorModes.isLight();
   const nodes = (graphData && graphData.nodes) || [];
-  const used = new Set(nodes.map(n => (ColorModes.roleGroup(n) || {}).key));
-  const rows = ColorModes.ROLE_GROUPS.filter(g => used.has(g.key))
-    .map(g => [light ? g.light : g.dark, i18n.t('legend_' + g.key)]);
-  if (nodes.some(n => !ColorModes.roleGroup(n) && n.roles && n.roles.length)) rows.push([ColorModes.ROLE_COLORS.withRole, i18n.t('legend_andere_rol')]);
+  const rows = Object.entries(categoryPalette).map(([cat, c]) => [c, escHtml(cat)]);
+  if (nodes.some(n => !ColorModes.nodeCategory(n) && n.roles && n.roles.length)) rows.push([ColorModes.ROLE_COLORS.withRole, i18n.t('legend_andere_rol')]);
   rows.push([ColorModes.ROLE_COLORS.noRole, i18n.t('legend_geen_rol')]);
   el.innerHTML = rows.map(([c, label]) => `<div><span class="swatch" style="background:${c}"></span>${label}</div>`).join('');
   el.classList.remove('hidden');
@@ -330,7 +328,7 @@ function renderRoleLegend() {
 
 window.renderRoleLegend = renderRoleLegend;
 
-// Theme switch: node colours differ per theme in role mode
+// Theme switch: rebuild node objects and legend
 window.refreshNodeColors = function () {
   if (graph) graph.nodeThreeObject(buildNodeObject);
   renderRoleLegend();

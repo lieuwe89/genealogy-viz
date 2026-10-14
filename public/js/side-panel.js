@@ -48,8 +48,8 @@ function backToSingle() {
   renderPanel(currentData);
 }
 
-// Gramps association: the label says what person B is to person A (e.g. Cornelis → Louis: "tot slaaf
-// gemaakte bediende in zijn huishouden"). On A's panel the label describes the listed person; on B's panel
+// Gramps association: the label says what person B is to person A (e.g. Jan → Pieter: "peetvader van").
+// On A's panel the label describes the listed person; on B's panel
 // it describes this person ("zelf: …").
 function associationText(rel, self) {
   const label = rel.label || '–';
@@ -61,7 +61,7 @@ function renderPanel(data) {
     .filter(Boolean).join(' ');
   document.getElementById('panel-name').textContent = fullName || '(unknown)';
 
-  // Header: involvement categories (Gramps Role attribute); older datasets only have plain roles.
+  // Header: categories (Gramps Role attribute); older datasets only have plain roles.
   const roleHeader = document.getElementById('panel-role-header');
   const categories = data.roles.filter(r => r.kind === 'category');
   const functions = data.roles.filter(r => r.kind !== 'category');
@@ -98,7 +98,7 @@ function renderPanel(data) {
   if (data.death_date) html += `<div>† ${date(data.death_date)}${data.death_place ? ' · ' + escHtml(data.death_place) : ''}</div>`;
   html += '</div>';
 
-  // Dated functions (colonial roles), oldest first
+  // Dated functions (occupations, offices), oldest first
   if (categories.length && functions.length) {
     const span = r => r.year_from && r.year_to && r.year_to !== r.year_from ? `${r.year_from}–${r.year_to}`
       : r.year_from ? `${r.year_from}${r.year_to ? '' : '–'}` : '';
@@ -112,7 +112,7 @@ function renderPanel(data) {
   // Connections grouped as parents / partners / children, oldest first
   const groups = { parent: [], spouse: [], child: [], association: [] };
   data.relationships.forEach(r => groups[RelPath.relationKind(r, data.id)].push(r));
-  [['parent', 'panel_parents'], ['spouse', 'panel_partners'], ['child', 'panel_children'], ['association', 'panel_household']].forEach(([kind, heading]) => {
+  [['parent', 'panel_parents'], ['spouse', 'panel_partners'], ['child', 'panel_children'], ['association', 'panel_associations']].forEach(([kind, heading]) => {
     const rels = groups[kind].sort((a, b) => (a.birth_year || 9999) - (b.birth_year || 9999));
     if (!rels.length) return;
     html += '<div class="panel-section"><div class="panel-label">' + escHtml(i18n.t(heading)) + '</div>';

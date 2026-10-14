@@ -1,6 +1,6 @@
 # CLAUDE.md — genealogy-viz
 
-Self-hosted 3D family tree visualiser: nodes placed by family proximity (X/Y) and birth year (Z). Deployed to the VPS behind nginx. Not updated for the slavernij network any more (that lives in `groningen-slavernij`).
+Self-hosted 3D family tree visualiser: nodes placed by family proximity (X/Y) and birth year (Z). Deployed to the VPS behind nginx. General-purpose showcase: no dataset-specific code. The slavernij network moved to `groningen-slavernij` (slavernij-groningen.lieuwejongsma.nl).
 
 **Stack:** Node.js + Express + SQLite (`better-sqlite3`) + 3d-force-graph (Three.js). `npm start` · `npm run dev` (node --watch) · `npm test` (Jest).
 
