@@ -74,3 +74,8 @@ test('falls back to the NAME value when GIVN/SURN are missing', () => {
     ['', '', ''],
   ]);
 });
+
+test('reads OCCU as a role', () => {
+  const raw = parseGedcom('0 @I1@ INDI\n1 NAME Jan /Bakker/\n1 OCCU Boer, koemelker\n1 OCCU Schipper');
+  expect(raw.persons[0].roles).toEqual(['Boer, koemelker', 'Schipper']);
+});

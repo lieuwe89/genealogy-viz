@@ -320,7 +320,7 @@ function renderRoleLegend() {
   if (colorMode !== 'role') { el.classList.add('hidden'); return; }
   const nodes = (graphData && graphData.nodes) || [];
   const rows = Object.entries(categoryPalette).map(([cat, c]) => [c, escHtml(cat)]);
-  if (nodes.some(n => !ColorModes.nodeCategory(n) && n.roles && n.roles.length)) rows.push([ColorModes.ROLE_COLORS.withRole, i18n.t('legend_andere_rol')]);
+  if (nodes.some(n => ColorModes.nodeCategory(n) && !categoryPalette[ColorModes.nodeCategory(n)])) rows.push([ColorModes.ROLE_COLORS.withRole, i18n.t('legend_andere_rol')]);
   rows.push([ColorModes.ROLE_COLORS.noRole, i18n.t('legend_geen_rol')]);
   el.innerHTML = rows.map(([c, label]) => `<div><span class="swatch" style="background:${c}"></span>${label}</div>`).join('');
   el.classList.remove('hidden');

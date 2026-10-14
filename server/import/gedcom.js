@@ -68,7 +68,8 @@ function parseGedcom(text) {
 
     const roles = children(r, 'FACT')
       .filter(f => child(f, 'TYPE') === 'Role')
-      .map(f => f.value);
+      .map(f => f.value)
+      .concat(children(r, 'OCCU').map(o => o.value).filter(Boolean));
 
     return {
       id: r.xref,
