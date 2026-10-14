@@ -8,9 +8,9 @@ let autoFit = true; // fit the whole network until the user or a fly-to takes ov
 
 // Associations (non-kin ties such as godparent, witness, household) get their own hue so they stand apart from kinship.
 const LINK_COLORS = {
-  spouse:      { on: '#f59e0b', off: '#252d3a', base: '#6e7681' },
+  spouse:      { on: '#f59e0b', off: '#252d3a', base: '#a1a9b3' },
   association: { on: '#e87ba4', off: '#2a1f26', base: '#9d5f7a' },
-  kin:         { on: '#facc15', off: '#1a2233', base: '#374151' },
+  kin:         { on: '#facc15', off: '#1a2233', base: '#7d8590' },
 };
 
 function getLinkColor(link) {
@@ -64,8 +64,8 @@ async function initViz() {
     .nodeThreeObject(buildNodeObject)
     .nodeThreeObjectExtend(false)
     .linkColor(getLinkColor)
-    .linkWidth(l => l.type === 'spouse' ? 1.5 : l.type === 'association' ? 1.2 : 0.8)
-    .linkOpacity(0.4)
+    .linkWidth(l => l.type === 'spouse' ? 2.5 : l.type === 'association' ? 2 : 1.5)
+    .linkOpacity(0.7)
     .onNodeClick(function(node) {
       if (window.isSelectingCompare) {
         window.isSelectingCompare = false;
@@ -274,7 +274,7 @@ function buildNodeObject(node) {
     color = ColorModes.getNodeColor(node, colorMode, surnamePalette, categoryPalette);
   }
 
-  const geo = new THREE.SphereGeometry(3, 12, 8);
+  const geo = new THREE.SphereGeometry(7, 16, 12);
 
   // Unknown birth year → wireframe, so the position on the time axis reads as a guess
   const mat = new THREE.MeshLambertMaterial({
@@ -286,7 +286,7 @@ function buildNodeObject(node) {
   const visibleMesh = new THREE.Mesh(geo, mat);
 
   // Larger invisible sphere so the click target is easier to hit
-  const hitGeo = new THREE.SphereGeometry(8, 8, 6);
+  const hitGeo = new THREE.SphereGeometry(10, 8, 6);
   const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
   const hitMesh = new THREE.Mesh(hitGeo, hitMat);
 

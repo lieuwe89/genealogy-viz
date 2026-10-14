@@ -1,7 +1,7 @@
 'use strict';
 
 const SEX_COLORS = { M: '#60a5fa', F: '#f472b6', U: '#9ca3af' };
-const ROLE_COLORS = { withRole: '#e3b341', noRole: '#4b5563' };
+const ROLE_COLORS = { withRole: '#e3b341', noRole: '#6e7681' };
 
 // Evenly spread hues, one per distinct value, in the order given.
 function buildPalette(values) {
