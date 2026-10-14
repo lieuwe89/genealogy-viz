@@ -64,3 +64,13 @@ test('parses sources', () => {
   expect(raw.sources[0].id).toBe('@S0001@');
   expect(raw.sources[0].title).toBe('Some Archive');
 });
+
+test('falls back to the NAME value when GIVN/SURN are missing', () => {
+  const raw = parseGedcom('0 @I1@ INDI\n1 NAME Geke Hannah (Hanneke) /Lestestuiver/\n0 @I2@ INDI\n1 NAME Anoniem //\n0 @I3@ INDI\n1 NAME Jan /de Vries/ jr.\n0 @I4@ INDI\n1 SEX M');
+  expect(raw.persons.map(p => [p.givenName, p.surname, p.nameSuffix])).toEqual([
+    ['Geke Hannah (Hanneke)', 'Lestestuiver', ''],
+    ['Anoniem', '', ''],
+    ['Jan', 'de Vries', 'jr.'],
+    ['', '', ''],
+  ]);
+});

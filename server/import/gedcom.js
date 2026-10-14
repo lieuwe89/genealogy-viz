@@ -58,6 +58,8 @@ function parseGedcom(text) {
 
   const persons = records.filter(r => r.tag === 'INDI').map(r => {
     const nameNode = r.children.find(c => c.tag === 'NAME');
+    // Without GIVN/SURN subtags (e.g. GeneWeb exports) the name lives in the value: "Given /Surname/ suffix"
+    const nameParts = ((nameNode && nameNode.value) || '').match(/^([^/]*)(?:\/([^/]*)\/?)?(.*)$/);
     const birtNode = r.children.find(c => c.tag === 'BIRT');
     const deatNode = r.children.find(c => c.tag === 'DEAT');
 
@@ -70,10 +72,10 @@ function parseGedcom(text) {
 
     return {
       id: r.xref,
-      givenName: nameNode ? child(nameNode, 'GIVN') : '',
-      surname: nameNode ? child(nameNode, 'SURN') : '',
+      givenName: (nameNode && child(nameNode, 'GIVN')) || nameParts[1].trim(),
+      surname: (nameNode && child(nameNode, 'SURN')) || (nameParts[2] || '').trim(),
       namePrefix: nameNode ? child(nameNode, 'SPFX') : '',
-      nameSuffix: nameNode ? child(nameNode, 'NSFX') : '',
+      nameSuffix: (nameNode && child(nameNode, 'NSFX')) || nameParts[3].trim(),
       sex: child(r, 'SEX') || 'U',
       birthYear: extractYear(birthDate),
       birthDate,
